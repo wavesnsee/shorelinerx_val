@@ -2,6 +2,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+f_parquet = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet'
+
 
 # read raw profiles
 f_raw = Path('/home/florent/dev/SDS_Benchmark/datasets/NARRABEEN/raw/Narrabeen_Profiles.csv')
@@ -21,18 +23,21 @@ for t in date:
         inds = np.where((df['Date'] == t) & (df['Profile ID'] == p))
         cross_sh_d_raw.append(df['Chainage'].iloc[inds].to_numpy())
         elevation_raw.append(df['Elevation'].iloc[inds].to_numpy())
+        # plt.plot(df['Chainage'].iloc[inds].to_numpy(), df['Elevation'].iloc[inds].to_numpy(), marker='s', color='r')
+        # plt.show()
+        # fit profile by a spline
+        # spline = UnivariateSpline(x[mask], y[mask], w=weight, s=s, k=k)
         date_out.append(t)
         profile.append(p)
-        print('')
+
 dico_out['date'] = date_out
 dico_out['profile_id'] = profile
-dico_out['cross_sh_d_raw'] = cross_sh_d_raw
-dico_out['elevation_raw'] = elevation_raw
+dico_out['cross_sh_d'] = cross_sh_d_raw
+dico_out['elevation'] = elevation_raw
 
 df_out = pd.DataFrame.from_dict(dico_out)
 
 # save dataframe to parquet
-f_out = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet'
-df_out.to_parquet(f_out)
+df_out.to_parquet(f_parquet)
 
 
