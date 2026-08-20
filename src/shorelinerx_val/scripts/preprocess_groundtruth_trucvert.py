@@ -24,9 +24,9 @@ def read_dems(filenames, f_grid):
     grids = []
     splines = []
     dates = []
+    gdf_sc = []
 
-    # read the .nc files and store the date and elevation for each file
-
+    # loop through the .nc files
     for i, f in enumerate(filenames):
         print(f)
         data = Dataset(f)
@@ -48,6 +48,7 @@ def read_dems(filenames, f_grid):
         gdf = gpd.GeoDataFrame(sc_data, geometry='geometry', crs="EPSG:4326")
         # change crs of gdf
         gdf = gdf.to_crs(epsg=32630)
+        gdf_sc.append(gdf)
 
         # Fit a spline interpolator to the scattered points
         coordinates = (gdf.geometry.x.to_numpy(), gdf.geometry.y.to_numpy())
@@ -56,26 +57,16 @@ def read_dems(filenames, f_grid):
         splines.append(spline)
 
         # Build a regular grid over the data's region and predict elevation on it
-        region = vd.get_region(coordinates)
-        grid = spline.grid(
-            spacing=5,  # grid cell size, same units as x/y
-            region=region,
-            data_names=["elevation"],
-        )
-        grids.append(grid)
+        # region = vd.get_region(coordinates)
+        # grid = spline.grid(
+        #     spacing=5,  # grid cell size, same units as x/y
+        #     region=region,
+        #     data_names=["elevation"],
+        # )
+        # grids.append(grid)
 
-    df_spline_dem = pd.DataFrame({'date': dates, 'spline': splines})
-        # 4. Plot
-        # fig, ax = plt.subplots(figsize=(8, 5))
-        # grid.elevation.plot(ax=ax, cmap="terrain", cbar_kwargs={"label": "elevation (m)"}, vmin=-10, vmax=10)
-        # ax.scatter(gdf.geometry.x, gdf.geometry.y, c=gdf.geometry.z, s=10, edgecolor='k', linewidth=0.5,
-        #            label="input points", vmin=-10, vmax=10, cmap="terrain")
-        # ax.set_aspect("equal")
-        # ax.legend()
-        # plt.tight_layout()
-        # plt.show()
-
-    return df_spline_dem, grids
+    df_dem = pd.DataFrame({'date': dates, 'spline': splines, 'gdf_sc': gdf_sc})
+    return df_dem
 
 
 def seg_to_tr(segments):
@@ -112,7 +103,7 @@ def extract_dems_profiles(df_splines_dem, df_tr):
     return df_bp
 
 
-def plot_profiles(df_bp, odir):
+def plot_profiles(df_tr, df_bp, df_dem, odir):
     for i in range(len(df_bp)):
 
         plot2d_range_x = [
@@ -126,22 +117,42 @@ def plot_profiles(df_bp, odir):
 
         fig, ax = plt.subplots(1, 2, figsize=(22, 6))
         # plot dem
-        grids[i].elevation.plot(ax=ax[0], cmap="terrain", cbar_kwargs={"label": "elevation (m)"}, vmin=-10, vmax=10)
+        # grids[i].elevation.plot(ax=ax[0], cmap="terrain", cbar_kwargs={"label": "elevation (m)"}, vmin=-10, vmax=10)
         # loop through transects
         for tr in df_tr.index:
+            # plot raw survey points
+            ax[0].scatter(df_dem.iloc[i]['gdf_sc'].geometry.x,
+                          df_dem.iloc[i]['gdf_sc'].geometry.y,
+                          c=df_dem.iloc[i]['gdf_sc'].geometry.z, s=15,
+                          vmin=-10, vmax=10, cmap="terrain")
+            # edgecolor = 'k', linewidth = 0.5,
+
             # plot transect
             ax[0].plot(df_tr.loc[tr]['x'], df_tr.loc[tr]['y'], linewidth=1, label=tr)
+
+            # plot interpolated survey points along transects
+            sc = ax[0].scatter(df_tr.loc[tr]['x'],
+                          df_tr.loc[tr]['y'],
+                          c=df_bp.iloc[i][tr],
+                          s=15,
+                          vmin=-10, vmax=10, cmap="terrain"
+                          )
+
             # plot beach profile
             ax[1].plot(df_tr.loc[tr]['distance'], df_bp.iloc[i][tr], label=tr)
+        plt.colorbar(sc)
         ax[1].set_xlabel('cross-shore distance (m)')
         ax[1].set_ylabel('elevation (m)')
         ax[0].legend()
         ax[1].legend()
+        ax[1].grid(True)
         ax[0].set_xlim(plot2d_range_x)
         ax[0].set_ylim(plot2d_range_y)
         ax[0].set_aspect("equal")
         fig.suptitle(df_bp.iloc[i]['date'])
-        plt.savefig(odir / f'bp_{df_bp.iloc[i]['date'].strftime('%Y%m%d')}.jpg', bbox_inches='tight')
+        f_jpg = odir / f'bp_trucvert/bp_{df_bp.iloc[i]['date'].strftime('%Y%m%d')}.jpg'
+        print(f_jpg)
+        plt.savefig(f_jpg, bbox_inches='tight')
     return
 
 
@@ -160,9 +171,6 @@ f_transects = Path('/home/florent/Projects/Shoreliner_CNES/validation/transects/
 # crs
 epsg_wl = 32630
 
-# read survey data
-df_splines_dem, grids = read_dems(filenames, f_grid)
-
 # read transects
 segments = gpd.read_file(f_transects)
 segments = segments.to_crs(epsg_wl)
@@ -170,11 +178,14 @@ segments = segments.to_crs(epsg_wl)
 # convert segments to transects
 df_tr = seg_to_tr(segments)
 
+# read survey data
+df_dem = read_dems(filenames, f_grid)
+
 # extract beach profiles at transects
-df_bp = extract_dems_profiles(df_splines_dem, df_tr)
+df_bp = extract_dems_profiles(df_dem, df_tr)
 
 # plot beach profiles
-plot_profiles(df_bp, odir)
+plot_profiles(df_tr, df_bp, df_dem, odir)
 
 # plot
 # loop through surveys
