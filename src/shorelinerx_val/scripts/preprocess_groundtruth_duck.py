@@ -5,46 +5,52 @@ from netCDF4 import Dataset
 from pathlib import Path
 from datetime import datetime, timedelta
 
+
+def read_survey_data(filenames):
+
+    # read all files and merge them
+    survey_data = dict([])
+
+    # reference time
+    ref_t = datetime(1970, 1, 1)
+
+    for f in sorted(filenames):
+        data = Dataset(f)
+        date_str = f.name[-11:].split('.nc')[0]
+        if date_str == '19890523': continue  # skip problematic survey
+
+        # get profile indices corresponding to transects used for validation
+        inds_transects = np.isin(data.variables['profileNumber'][:], profiles)
+
+        # read variables of interest
+        if np.sum(inds_transects) > 0:
+            # time
+            t = data.variables['time'][inds_transects]
+            t_dtm = ref_t + timedelta(seconds=np.median(t))
+
+            # survey number
+            survey_number = np.array(data.variables['surveyNumber'][:])[0]
+            # survey data
+            survey_data[str(survey_number)] = dict([])
+            survey_data[str(survey_number)]['date'] = t_dtm
+            survey_data[str(survey_number)]['latitude'] = np.array(data.variables['lat'][:])
+            survey_data[str(survey_number)]['longitude'] = np.array(data.variables['lon'][:])
+            survey_data[str(survey_number)]['x'] = np.array(data.variables['xFRF'][:])
+            survey_data[str(survey_number)]['y'] = np.array(data.variables['yFRF'][:])
+            survey_data[str(survey_number)]['elevation'] = np.array(data.variables['elevation'][:])
+            survey_data[str(survey_number)]['profile'] = np.array(data.variables['profileNumber'][:])
+    return survey_data
+
 # output file
 f_parquet = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet'
 
-fp_raw = os.path.join('/home/florent/dev/SDS_Benchmark/datasets/DUCK/', 'raw')
+# input files
 filenames = sorted(Path('/home/florent/dev/SDS_Benchmark/datasets/DUCK/raw/').glob('*.nc'))
 
 profiles = [-91, 1, 1006, 1097]
 pf_names = [str(_) for _ in profiles]
 
-# reference time
-ref_t = datetime(1970, 1, 1)
-
-# read all files and merge them
-survey_data = dict([])
-
-for fn in sorted(filenames):
-    data = Dataset(os.path.join(fp_raw,fn))
-    date_str = fn.name[-11:].split('.nc')[0]
-    if date_str == '19890523': continue     # skip problematic survey
-
-    # get profile indices corresponding to transects used for validation
-    inds_transects = np.isin(data.variables['profileNumber'][:], profiles)
-
-    # read variables of interest
-    if np.sum(inds_transects) > 0:
-        # time
-        t = data.variables['time'][inds_transects]
-        t_dtm = ref_t + timedelta(seconds=np.median(t))
-
-        # survey number
-        survey_number = np.array(data.variables['surveyNumber'][:])[0]
-        # survey data
-        survey_data[str(survey_number)] = dict([])
-        survey_data[str(survey_number)]['date'] = t_dtm
-        survey_data[str(survey_number)]['latitude'] = np.array(data.variables['lat'][:])
-        survey_data[str(survey_number)]['longitude'] = np.array(data.variables['lon'][:])
-        survey_data[str(survey_number)]['x'] = np.array(data.variables['xFRF'][:])
-        survey_data[str(survey_number)]['y'] = np.array(data.variables['yFRF'][:])
-        survey_data[str(survey_number)]['elevation'] = np.array(data.variables['elevation'][:])
-        survey_data[str(survey_number)]['profile'] = np.array(data.variables['profileNumber'][:])
+survey_data = read_survey_data(filenames)
 
 # initialization of output variables
 time = []
