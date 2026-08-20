@@ -16,4 +16,5 @@ dependencies = [
     "pyqt5>=5.15.11",
     "requests>=2.34.2",
     "scipy>=1.18.0",
+    "verde>=1.9.0",
 ]
