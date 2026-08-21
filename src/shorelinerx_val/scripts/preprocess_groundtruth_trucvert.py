@@ -35,15 +35,20 @@ def read_dems(filenames, f_grid):
         dates.append(date)
         date_str += '12:00'
 
-        # read scatter survey points (epsg 4326)
-        lon = data.variables['lon'][:]
+        # read scatter survey points (epsg 4326), at lat > 44.74
         lat = data.variables['lat'][:]
-        z = data.variables['z'][:]
+        i_lat = lat > 44.74
+        print(len(i_lat))
+        lat = lat[i_lat]
+        lon = data.variables['lon'][i_lat]
+        z = data.variables['z'][i_lat]
+
         survey_pts = [Point(lon[i], lat[i], z[i]) for i in range(len(lon)) if not np.isnan(z[i])]
         sc_data = {
             'id': np.arange(len(survey_pts)),
             'geometry': survey_pts
         }
+
         # create gedataframe
         gdf = gpd.GeoDataFrame(sc_data, geometry='geometry', crs="EPSG:4326")
         # change crs of gdf
@@ -51,9 +56,15 @@ def read_dems(filenames, f_grid):
         gdf_sc.append(gdf)
 
         # Fit a spline interpolator to the scattered points
-        coordinates = (gdf.geometry.x.to_numpy(), gdf.geometry.y.to_numpy())
         spline = vd.Spline()
-        spline.fit(coordinates, gdf.geometry.z.to_numpy())
+        coordinates = (gdf.geometry.x.to_numpy(), gdf.geometry.y.to_numpy())
+        if len(i_lat > 1000):
+            # decimate data if it is too large
+            blockmean = vd.BlockMean(spacing=5)  # coarser than your final grid spacing
+            coords_dec, z_dec, weights_dec = blockmean.filter(coordinates, gdf.geometry.z.to_numpy())
+            spline.fit(coords_dec, z_dec, weights=weights_dec)
+        else:
+            spline.fit(coordinates, gdf.geometry.z.to_numpy())
         splines.append(spline)
 
         # Build a regular grid over the data's region and predict elevation on it
@@ -78,7 +89,7 @@ def seg_to_tr(segments):
         (transects[name]['x'], transects[name]['y']), transects[name]['distance'] = vd.profile_coordinates(
             (transect.geometry.xy[0][0], transect.geometry.xy[1][0]),
             (transect.geometry.xy[0][1], transect.geometry.xy[1][1]),
-            size=200)
+            size=100)
     df_tr = pd.DataFrame.from_dict(transects, orient="index")
     return df_tr
 
@@ -111,8 +122,8 @@ def plot_profiles(df_tr, df_bp, df_dem, odir):
             np.concatenate(df_tr['x'].values).max()
         ]
         plot2d_range_y = [
-            np.concatenate(df_tr['y'].values).min(),
-            np.concatenate(df_tr['y'].values).max()
+            np.concatenate(df_tr['y'].values).min() - 100,
+            np.concatenate(df_tr['y'].values).max() + 100
         ]
 
         fig, ax = plt.subplots(1, 2, figsize=(22, 6))
@@ -148,10 +159,13 @@ def plot_profiles(df_tr, df_bp, df_dem, odir):
         ax[1].grid(True)
         ax[0].set_xlim(plot2d_range_x)
         ax[0].set_ylim(plot2d_range_y)
+        ax[1].set_xlim([40, 250])
+        ax[1].set_ylim([-5, 8])
         ax[0].set_aspect("equal")
         fig.suptitle(df_bp.iloc[i]['date'])
         f_jpg = odir / f'bp_trucvert/bp_{df_bp.iloc[i]['date'].strftime('%Y%m%d')}.jpg'
         print(f_jpg)
+        # plt.show()
         plt.savefig(f_jpg, bbox_inches='tight')
     return
 
@@ -186,14 +200,6 @@ df_bp = extract_dems_profiles(df_dem, df_tr)
 
 # plot beach profiles
 plot_profiles(df_tr, df_bp, df_dem, odir)
-
-# plot
-# loop through surveys
-
-
-# extract survey data along transects
-
-
 
 
 # create a dataframe
