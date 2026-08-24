@@ -162,7 +162,6 @@ odir = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth')
 # input files
 filenames = sorted(Path('/home/florent/dev/SDS_Benchmark/datasets/TRUCVERT/raw/').glob('Monitoring*.nc'))
 f_grid = Path('/home/florent/dev/SDS_Benchmark/datasets/TRUCVERT/raw/Grids.nc')
-f_transects = Path('/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/TRUCVERT_transects.geojson')
 
 # crs
 epsg_wl = 32630
