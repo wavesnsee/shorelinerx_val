@@ -36,7 +36,7 @@ def plot_profiles(f_parquet, odir):
     p_main = figure(
         width=900,
         height=500,
-        title=f'Beach Profiles at {sitename}',
+        title=f'Beach Profiles at {sitename} (vertical ref: MSL)',
         x_axis_label='Cross-shore distance (m)',
         y_axis_label='Elevation (m)',
         x_range=x_range,
@@ -192,9 +192,9 @@ if __name__ == '__main__':
 
     # input parquet
     # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet')
-    # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet')
+    f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet')
     # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet')
-    f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_torreypines.parquet')
+    # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_torreypines.parquet')
 
     # plot beach profiles
     plot_profiles(f_parquet, odir)
