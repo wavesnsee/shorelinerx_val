@@ -85,5 +85,8 @@ for n in survey_data.keys():
 # create a dataframe
 df = pd.DataFrame({'date': time, 'profile_id': profil, 'cross_sh_d':cross_sh_d, 'elevation': elevation})
 
+# apply vertical shift to elevation, so as to express it relatively to MSL
+df['elevation']  += 0.128
+
 # save dataframe to parquet
 df.to_parquet(f_parquet)

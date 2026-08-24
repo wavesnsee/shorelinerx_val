@@ -220,6 +220,9 @@ df_profiles = read_dems(filenames, transects)
 # plot beach profiles
 plot_profiles(df_profiles, transects, odir)
 
+# apply vertical shift to elevation, so as to express it relatively to MSL
+df_profiles['elevation']  -= 0.774
+
 # save dataframe to parquet
 df_profiles.to_parquet(f_parquet)
 
