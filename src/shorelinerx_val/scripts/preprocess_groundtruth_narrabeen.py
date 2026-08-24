@@ -23,10 +23,6 @@ for t in date:
         inds = np.where((df['Date'] == t) & (df['Profile ID'] == p))
         cross_sh_d_raw.append(df['Chainage'].iloc[inds].to_numpy())
         elevation_raw.append(df['Elevation'].iloc[inds].to_numpy())
-        # plt.plot(df['Chainage'].iloc[inds].to_numpy(), df['Elevation'].iloc[inds].to_numpy(), marker='s', color='r')
-        # plt.show()
-        # fit profile by a spline
-        # spline = UnivariateSpline(x[mask], y[mask], w=weight, s=s, k=k)
         date_out.append(t)
         profile.append(p)
 
