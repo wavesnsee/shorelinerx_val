@@ -193,7 +193,8 @@ if __name__ == '__main__':
     # input parquet
     # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet')
     # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet')
-    f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet')
+    # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet')
+    f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_torreypines.parquet')
 
     # plot beach profiles
     plot_profiles(f_parquet, odir)
