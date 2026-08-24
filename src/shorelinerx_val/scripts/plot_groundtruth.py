@@ -29,11 +29,14 @@ def plot_profiles(f_parquet, odir):
         palette = palette * ((len(profile_ids) // 10) + 1)
     color_map = {str(pid): palette[i % 10] for i, pid in enumerate(profile_ids)}
 
+    # site name
+    sitename = f_parquet.stem.split('_')[-1]
+
     # Main plot
     p_main = figure(
         width=900,
         height=500,
-        title='Beach Profiles',
+        title=f'Beach Profiles at {sitename}',
         x_axis_label='Cross-shore distance (m)',
         y_axis_label='Elevation (m)',
         x_range=x_range,
@@ -177,7 +180,7 @@ def plot_profiles(f_parquet, odir):
     # Layout
     layout = column(slider, p_main, sizing_mode='stretch_width')
 
-    html_name = f'beach_profiles_{f_parquet.stem.split('_')[-1]}.html'
+    html_name = f'beach_profiles_{sitename}.html'
     output_file(odir / html_name)
     save(layout)
 
