@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 from bokeh.plotting import figure, show, output_file, save
 from bokeh.layouts import column
@@ -8,7 +9,7 @@ from bokeh.models import Range1d, ColumnDataSource, Slider, CustomJS, TapTool
 from bokeh.palettes import Category10
 
 
-def plot_profiles(f_parquet):
+def plot_profiles(f_parquet, odir):
 
     df = pd.read_parquet(f_parquet)
 
@@ -176,11 +177,20 @@ def plot_profiles(f_parquet):
     # Layout
     layout = column(slider, p_main, sizing_mode='stretch_width')
 
-    output_file('beach_profiles.html')
+    html_name = f'beach_profiles_{f_parquet.stem.split('_')[-1]}.html'
+    output_file(odir / html_name)
     save(layout)
 
 
 if __name__ == '__main__':
-    # f_parquet = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet'
-    f_parquet = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet'
-    plot_profiles(f_parquet)
+
+    # output directory
+    odir = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/plots/')
+
+    # input parquet
+    # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet')
+    # f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet')
+    f_parquet = Path('/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet')
+
+    # plot beach profiles
+    plot_profiles(f_parquet, odir)
