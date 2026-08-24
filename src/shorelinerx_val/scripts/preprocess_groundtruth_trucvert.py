@@ -107,7 +107,15 @@ def plot_profiles(gdf_transects, df_profiles, transects, odir):
         ax[0].set_title('raw survey')
         for i_t, tr in enumerate(transects):
             tr_coords = np.array(gdf_transects.iloc[i_t].geometry.xy)
-            ax[0].plot(tr_coords[0], tr_coords[1], linewidth=1, label=tr, zorder=1)
+            ax[0].plot(tr_coords[0], tr_coords[1], label=tr, zorder=1, linewidth=1)
+
+        # to check that transects in the benchmark are well the same than the ones from the survey grid
+        # f_transects = Path(
+        #     '/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/TRUCVERT_transects.geojson')
+        # segments = gpd.read_file(f_transects)
+        # segments = segments.to_crs(32630)
+        # for i_s, segment in segments.iterrows():
+        #     ax[0].plot(segment.geometry.xy[0], segment.geometry.xy[1], label=segment['name'], linewidth=2)
 
         i_dates = np.where(df_profiles['date'] == date)[0]
         for i in i_dates:
@@ -136,6 +144,7 @@ def plot_profiles(gdf_transects, df_profiles, transects, odir):
             ax[1].set_ylim([-2, 12])
             ax[1].legend(loc='upper right')
             ax[1].grid(True)
+        plt.show()
         f_jpg = odir / f'bp_trucvert/bp_{pd.Timestamp(date).strftime('%Y-%m-%d')}.jpg'
 
         plt.savefig(f_jpg, bbox_inches='tight')
