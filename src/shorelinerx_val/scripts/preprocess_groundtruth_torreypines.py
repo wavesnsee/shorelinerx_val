@@ -128,13 +128,6 @@ def read_dems(filenames, transects):
             northing.append(n)
 
 
-
-            # fig, ax = plt.subplots()
-            # # ax.scatter(d, el, c=z, vmin=-10, vmax=10, cmap='terrain')
-            # ax.plot(d, el)
-            # # ax.set_aspect("equal")
-            # plt.show()
-
     # create a dataframe
     df = pd.DataFrame({'date': dates, 'profile_id': profile_id, 'cross_sh_d': csd, 'elevation': elevation,
                        'mask': masks, 'northing': northing, 'easting': easting})
