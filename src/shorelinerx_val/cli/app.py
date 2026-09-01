@@ -10,9 +10,11 @@ from shorelinerx_val.cli import val
 
 app = typer.Typer(no_args_is_help=True)
 
+
 class AppConfig(BaseModel):
     f_sx_bw: Path
     f_insitu_bp: Path
+    table_tr_id: dict
     odir: Path
 
 
