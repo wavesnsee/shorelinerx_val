@@ -1,7 +1,7 @@
 [project]
 name = "shorelinerx-val"
 version = "0.1.0"
-description = "Validation of shorelinerx waterlines"
+description = "Validation to assess shorelinerx waterlines accuracy"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
