@@ -24,7 +24,7 @@ for t in date:
         inds = np.where((df['Date'] == t) & (df['Profile ID'] == p))
         cross_sh_d_raw.append(df['Chainage'].iloc[inds].to_numpy())
         elevation_raw.append(df['Elevation'].iloc[inds].to_numpy())
-        date_out.append(datetime.strptime(t + ' 12:00', '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc))
+        date_out.append(datetime.strptime(t + ' 22:00', '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc))
         profile.append(p)
 
 dico_out['date'] = date_out
