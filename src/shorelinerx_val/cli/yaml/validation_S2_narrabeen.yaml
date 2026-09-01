@@ -1,0 +1,4 @@
+site: 'narrabeen'
+f_sx_bw: '/home/florent/Projects/Shoreliner_CNES/validation/runs/narrabeen/reference_shoreline/intersections.parquet' # shorelinerx intersections results' file
+f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet' # groundtruth beach profile's file
+odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results
