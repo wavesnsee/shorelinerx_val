@@ -13,8 +13,10 @@ dependencies = [
     "numpy>=2.5.1",
     "pandas>=3.0.5",
     "pyarrow>=25.0.0",
+    "pydantic>=2.13.5",
     "pyqt5>=5.15.11",
     "requests>=2.34.2",
     "scipy>=1.18.0",
+    "typer>=0.27.2",
     "verde>=1.9.0",
 ]
