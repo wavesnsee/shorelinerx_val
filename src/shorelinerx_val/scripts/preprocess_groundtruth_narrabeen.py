@@ -1,7 +1,7 @@
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 f_parquet = '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet'
 
@@ -24,7 +24,7 @@ for t in date:
         inds = np.where((df['Date'] == t) & (df['Profile ID'] == p))
         cross_sh_d_raw.append(df['Chainage'].iloc[inds].to_numpy())
         elevation_raw.append(df['Elevation'].iloc[inds].to_numpy())
-        date_out.append(datetime.strptime(t, '%Y-%m-%d'))
+        date_out.append(datetime.strptime(t + ' 12:00', '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc))
         profile.append(p)
 
 dico_out['date'] = date_out
