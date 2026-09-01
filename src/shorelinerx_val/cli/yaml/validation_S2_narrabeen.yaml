@@ -4,7 +4,7 @@ f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beac
 table_tr_id: # correspondance of transect ids
   0: 'PF1'
   1: 'PF2'
-  2: 'PF3'
-  3: 'PF4'
-  4: 'PF5'
+  2: 'PF4'
+  3: 'PF6'
+  4: 'PF8'
 odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results
