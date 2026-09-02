@@ -20,8 +20,17 @@ def cross_shore_at_elevation(x, y, target_elev):
     '''
     assess from beach profile the cross shore distance corresponding to a given height
     '''
-    x = np.asarray(x)
-    y = np.asarray(y)
-    if y[0] > y[-1]:
-        x, y = x[::-1], y[::-1]
-    return np.interp(target_elev, y, x)
+    d = y - target_elev
+    sign_change = np.where(np.diff(np.sign(d)) != 0)[0]
+
+    crossings = []
+    for i in sign_change:
+        # linear interpolation between point i and i+1
+        x_cross = x[i] + (x[i + 1] - x[i]) * (0 - d[i]) / (d[i + 1] - d[i])
+        crossings.append(x_cross)
+    # keep most seaward crossing
+    if len(crossings) > 0:
+        csd = crossings[-1]
+    else:
+        csd = None
+    return csd
