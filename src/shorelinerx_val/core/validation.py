@@ -4,10 +4,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from shorelinerx_val.core import insitu, sx
+from shorelinerx_val.core import insitu, sx, stats
 
 
-def bracket_indices(times, target):
+def bracket_indices(times: pd.Series, target: pd.Timestamp):
     """
     times: sorted array of datetime64
     target: a single datetime64 value
@@ -15,18 +15,13 @@ def bracket_indices(times, target):
     """
     idx = np.searchsorted(times, target)
 
-    # if idx == 0:
-    #     return 0, 0  # target before array start
-    # if idx == len(times):
-    #     return len(times) - 1, len(times) - 1  # target after array end
-
     if idx == 0 or idx == len(times):# target before array start, or target after array end
         return None, None
     else:
         return idx - 1, idx
 
 
-def compute_d_bw(df_bw, df_bp, table_tr_id):
+def compute_d_bw(df_bw: pd.DataFrame, df_bp: pd.DataFrame, table_tr_id: dict):
     '''
     compute difference of beach width (waterline position) between shorelinerx and insitu
     :return:
@@ -129,6 +124,11 @@ def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, odir: Path):
     df_bw = sx.read_bw(f_sx_bw, table_tr_id)
 
     # compute difference of beach width between shorelinerx and insitu
-    df_dbw =compute_d_bw(df_bw, df_bp, table_tr_id)
+    df_dbw = compute_d_bw(df_bw, df_bp, table_tr_id)
+
+    # compute validation metrics
+    df_stats = stats.validation_metrics(df_dbw)
+
+    # plot validation stats
 
     return
