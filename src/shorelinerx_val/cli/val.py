@@ -6,5 +6,6 @@ def main(conf):
         conf.f_sx_bw,
         conf.f_insitu_bp,
         conf.table_tr_id,
+        conf.site,
         conf.odir
     )

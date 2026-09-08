@@ -63,3 +63,12 @@ def validation_metrics(df_dbw: pd.DataFrame):
     })
 
     return df_stats
+
+
+def box_stats(arr, label):
+    q1, median, q3 = np.percentile(arr, [25, 50, 75])
+    iqr = q3 - q1
+    upper = min(arr.max(), q3 + 1.5 * iqr)
+    lower = max(arr.min(), q1 - 1.5 * iqr)
+    return dict(label=label, q1=q1, q2=median, q3=q3,
+                upper=upper, lower=lower)

@@ -12,6 +12,7 @@ app = typer.Typer(no_args_is_help=True)
 
 
 class AppConfig(BaseModel):
+    site: str
     f_sx_bw: Path
     f_insitu_bp: Path
     table_tr_id: dict
@@ -41,6 +42,9 @@ def main(
         raise typer.Exit("Shorelinerx intersections results' file does not exist")
     if not conf.f_insitu_bp.exists():
         raise typer.Exit("groundtruth beach profile's file")
+
+    if not conf.odir.exists():
+        conf.odir.mkdir(parents=True, exist_ok=True)
 
     try:
         # Run validation

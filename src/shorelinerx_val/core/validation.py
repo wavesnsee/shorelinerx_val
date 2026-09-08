@@ -1,10 +1,8 @@
-import pdb
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
-from shorelinerx_val.core import insitu, sx, stats
+from shorelinerx_val.core import insitu, sx, stats, plot
 
 
 def bracket_indices(times: pd.Series, target: pd.Timestamp):
@@ -107,7 +105,7 @@ def compute_d_bw(df_bw: pd.DataFrame, df_bp: pd.DataFrame, table_tr_id: dict):
     return df_bw
 
 
-def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, odir: Path):
+def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, site: str, odir: Path):
     '''
 
     :param f_sx_bw: intersections file (geoparquet) from shorelinerx
@@ -130,5 +128,6 @@ def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, odir: Path):
     df_stats = stats.validation_metrics(df_dbw)
 
     # plot validation stats
+    plot.make(df_dbw, df_stats, site, odir)
 
     return
