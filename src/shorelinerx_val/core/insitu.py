@@ -13,6 +13,8 @@ def read_bp(f_insitu_bp: Path):
     df = pd.read_parquet(f_insitu_bp)
     df = df[df['elevation'].apply(lambda x: len(x) > 0)].reset_index(drop=True)
 
+    df = df.rename(columns={"date": "datetime_utc"})
+
     return df
 
 
