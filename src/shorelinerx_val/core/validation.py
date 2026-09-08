@@ -41,7 +41,7 @@ def compute_d_bw(df_bw: pd.DataFrame, df_bp: pd.DataFrame, table_tr_id: dict):
         for _, wl in df_bw_tr.iterrows():
 
             # date difference with insitu beach profiles
-            dt = wl['datetime_utc'] - df_bp_tr['date']
+            dt = wl['datetime_utc'] - df_bp_tr['datetime_utc']
 
             # masks 3days, 10days
             mask_3days = dt.abs() < pd.Timedelta(days=3)
@@ -70,7 +70,7 @@ def compute_d_bw(df_bw: pd.DataFrame, df_bp: pd.DataFrame, table_tr_id: dict):
                 # use the 2 neareast beach profiles to find csd of waterline if there is an situ beach profile between 3 and 10 days
                 else:
                     # get the bp date indices surrounding waterline date
-                    i1, i2 = bracket_indices(df_bp_tr['date'], wl['datetime_utc'])
+                    i1, i2 = bracket_indices(df_bp_tr['datetime_utc'], wl['datetime_utc'])
                     bp1 = df_bp_tr.iloc[i1]
                     bp2 = df_bp_tr.iloc[i2]
                     csd_from_bp1 = insitu.cross_shore_at_elevation(bp1['cross_sh_d'].squeeze(),
