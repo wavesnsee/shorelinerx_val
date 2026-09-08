@@ -40,6 +40,7 @@ def timeseries(df_dbw:pd.DataFrame):
                line_color="#378ADD", line_width=1.5)
 
         p.yaxis.axis_label = f'Waterline position (m)'
+        p.legend.click_policy = "hide"
 
         return p
 
