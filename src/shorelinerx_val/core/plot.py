@@ -2,23 +2,114 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from bokeh.models import (LinearColorMapper, Slider, CustomJS, ColorBar, Span, WMTSTileSource, RadioButtonGroup, Label,
-                          Select, HoverTool, ColumnDataSource, Div)
+                          Select, RangeTool, Range1d, HoverTool, ColumnDataSource, Div, Spacer)
 from bokeh.plotting import figure, save, output_file
 from bokeh.layouts import column, row, gridplot
 
 from shorelinerx_val.core import stats
 
 
-def timeseries():
-    return
+def timeseries(df_dbw:pd.DataFrame):
+    '''
+    plot timeseries of shorelinerx and groundtruth position along validation transects
+    '''
+
+    # Create a global title using a Div
+    global_title = Div(text="<h2>Timeseries of waterline position along transects</h2>", sizing_mode='stretch_width')
+
+    # tmin, tmax
+    tmin = df_dbw['datetime_utc'].min()
+    tmax = df_dbw['datetime_utc'].max()
+    x_range = Range1d(tmin, tmax)
+
+    # list of transects
+    list_transects = sorted(list(set(df_dbw['transect_id'])))
+
+    def subplot(df_dbw, tr, x_range):
+
+        # Create a ColumnDataSource from dataframe df_dbw
+        source = ColumnDataSource(df_dbw[df_dbw['transect_id'] == tr])
+
+        p = figure(sizing_mode='stretch_width', height=200,
+                   title=f"Waterline position along transect {tr}",
+                   x_range=x_range)
+
+        p.line('datetime_utc', 'bw_insitu_m', source=source, legend_label="groundtruth",
+               line_color="black", line_width=1.5)
+        p.line('datetime_utc', 'beach_width_m', source=source, legend_label="shorelinerx",
+               line_color="#378ADD", line_width=1.5)
+
+        p.yaxis.axis_label = f'Waterline position (m)'
+
+        return p
+
+    def range_tool_selector(df_dbw, tr, x_range, tmin, tmax):
+        '''
+        small overview plot with a RangeTool that controls `x_range` (the shared
+        range used by the main plots above)
+        '''
+        source = ColumnDataSource(df_dbw[df_dbw['transect_id'] == tr])
+
+        select = figure(sizing_mode='stretch_width', height=130,
+                        title="Drag to select a time range (applies to all plots above)",
+                        x_range=Range1d(tmin, tmax),  # own, fixed, full-extent range
+                        tools="", toolbar_location=None,
+                        y_axis_type=None, background_fill_color="#efefef")
+
+        select.line('datetime_utc', 'bw_insitu_m', source=source,
+                    line_color="black", line_width=1)
+        select.line('datetime_utc', 'beach_width_m', source=source,
+                    line_color="#378ADD", line_width=1)
+
+        range_tool = RangeTool(x_range=x_range)
+        range_tool.overlay.fill_color = "navy"
+        range_tool.overlay.fill_alpha = 0.2
+
+        select.add_tools(range_tool)
+        select.ygrid.grid_line_color = None
+
+        return select
+
+    p_ts = [subplot(df_dbw, tr, x_range) for tr in list_transects]
+
+    # use the last transect's data to build the selector plot at the bottom
+    selector = range_tool_selector(df_dbw, list_transects[-1], x_range, tmin, tmax)
+
+    layout = column(global_title, *p_ts, selector, sizing_mode='stretch_width')
+
+    return layout
+
+
+def statistics(df_dbw, df_stats, site):
+    '''
+    plot statistics of difference between shorelinerx and groundtruth position along validation transects
+    '''
+
+    # scatter
+    p1 = scatter(df_dbw, df_stats)
+
+    # box distribution of the error
+    p2 = box_error(df_dbw)
+
+    # histogram of error
+    p3 = histo_error(df_dbw)
+
+    # Add global title
+    title = Div(text=f"<h2>Shorelinerx validation statistics at {site}</h2>", align="center",
+                styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
+    layout_stats = row(p1, p2)
+    layout_stats = column(title, layout_stats, Spacer(height=30), p3)
+
+    return layout_stats
+
 
 def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
 
     p1 = figure(
-        title="Shorelinerx vs Groundtruth beach width",
+        title="Shorelinerx vs Groundtruth waterline position",
         x_axis_label="Groundtruth waterline position along transects (m)",
         y_axis_label="Shorelinerx waterline position along transects (m)",
-        width=400, height=350,
+        width=400, height=400,
     )
 
     # Create a ColumnDataSource from dataframe df_dbw
@@ -90,7 +181,7 @@ def box_error(df_dbw: pd.DataFrame):
         title="Distribution of the error",
         x_range=labels,
         y_axis_label="Value (m)",
-        width=400, height=350,
+        width=400, height=400,
     )
 
     # IQR box
@@ -116,7 +207,7 @@ def histo_error(df_dbw: pd.DataFrame):
         title="Error histogram  (shorelinerx − groundtruth)",
         x_axis_label="Error (m)",
         y_axis_label="Count",
-        width=820, height=300,
+        width=1090, height=400,
     )
     p3.quad(
         top=hist, bottom=0,
@@ -136,25 +227,41 @@ def make(df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
     mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
     df_dbw = df_dbw[mask_valid]
 
-    # shorelinerx and insitu timeseries of beach width
+    # timeseries of shorelinerx and insitu waterline position
+    layout_ts = timeseries(df_dbw)
 
-    # scatter
-    p1 = scatter(df_dbw, df_stats)
+    # stats
+    layout_stats = statistics(df_dbw, df_stats, site)
 
-    # box distribution of the error
-    p2 = box_error(df_dbw)
+    # gather timeseries and stats plots in a single page, using a radio button group
+    labels = ['Timeseries', 'Statistics']
+    layouts_val = [layout_ts, layout_stats]
 
-    # histogram of error
-    p3 = histo_error(df_dbw)
+    # --- Radio button group ---
+    radio = RadioButtonGroup(
+        labels=labels,
+        active=0,
+        button_type="success"
+    )
 
-    # Add global title
-    title = Div(text=f"<h2>Shorelinerx Validation at {site}</h2>", align="center",
-                styles={"margin-bottom": "10px"})
+    # Set initial visibility: only the first layout is visible
+    for i, layout in enumerate(layouts_val):
+        layout.visible = (i == 0)
 
-    layout_stats = row(p1, p2)
-    layout_stats = column(title, layout_stats, p3)
-    output_file(odir.joinpath(f'validation_sx_{site}.html'))
-    print('\n --> %s \n' % (odir.joinpath('validation_sx.html')))
-    save(layout_stats)
+    # Simple loop: show only the plot matching the active index
+    callback = CustomJS(args=dict(plots=layouts_val), code="""
+            for (let i = 0; i < plots.length; i++) {
+                plots[i].visible = (i === cb_obj.active);
+            }
+        """)
+    radio.js_on_change("active", callback)
+
+    layout = column(radio, *layouts_val, sizing_mode='stretch_width')
+
+    # save
+    f_out = odir.joinpath(f'validation_sx_{site}.html')
+    output_file(f_out)
+    print('\n --> %s \n' %f_out)
+    save(layout, title='Validation Shorelinerx')
 
     return
