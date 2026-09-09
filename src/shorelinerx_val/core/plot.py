@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from bokeh.models import (LinearColorMapper, Slider, CustomJS, ColorBar, Span, WMTSTileSource, RadioButtonGroup, Label,
-                          Select, RangeTool, Range1d, HoverTool, ColumnDataSource, Div, Spacer)
+from bokeh.models import (CustomJS, WMTSTileSource, RadioButtonGroup, Label, RangeTool, Range1d, HoverTool,
+                          ColumnDataSource, Div, Spacer)
 from bokeh.plotting import figure, save, output_file
 from bokeh.layouts import column, row, gridplot
 
@@ -110,6 +110,7 @@ def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
         title="Shorelinerx vs Groundtruth waterline position",
         x_axis_label="Groundtruth waterline position along transects (m)",
         y_axis_label="Shorelinerx waterline position along transects (m)",
+        match_aspect=True,
         width=400, height=400,
     )
 
