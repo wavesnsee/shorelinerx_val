@@ -9,6 +9,56 @@ from bokeh.layouts import column, row, gridplot
 from shorelinerx_val.core import stats
 
 
+def osm_tile(tile_choice: str):
+
+    # OSM tiles
+    if tile_choice == 'carto_light':
+        tile = WMTSTileSource(
+            url='https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{Z}/{X}/{Y}.png',
+            attribution='&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        )
+
+    elif tile_choice == "Esri":
+        tile = "Esri World Imagery"
+
+    return tile
+
+
+def transects(df_tr: pd.DataFrame, table_tr_id:dict, odir):
+
+    # convert transects coordinates to web mercator
+    df_tr = df_tr.to_crs(3857)
+
+    # Create figure
+    p = figure(title='Validation transects', width=1536, height=864, x_axis_type="mercator", y_axis_type="mercator",
+               match_aspect=True)
+
+    # Add OSM tiles
+    tile_choice = 'Esri'
+    p.add_tile(osm_tile(tile_choice))
+
+    # Hide grid lines
+    p.grid.visible = False
+
+    # plot transects
+    for i in range(len(df_tr)):
+        p.line(df_tr.geometry[i].xy[0], df_tr.geometry[i].xy[1], line_width=2, color="red")
+
+    # plot transects' names
+    for i in range(len(df_tr)):
+        label = Label(
+            x=df_tr.geometry[i].xy[0][-1], y=df_tr.geometry[i].xy[1][-1],
+            text=table_tr_id[i],
+            x_offset=8, y_offset=0,
+            text_font_size="12pt", text_baseline="middle",
+            background_fill_color="white", background_fill_alpha=1,
+            border_line_color="black", border_line_alpha=0.5,
+        )
+        p.add_layout(label)
+
+    return p
+
+
 def timeseries(df_dbw:pd.DataFrame):
     '''
     plot timeseries of shorelinerx and groundtruth position along validation transects
@@ -223,11 +273,14 @@ def histo_error(df_dbw: pd.DataFrame):
     return p3
 
 
-def make(df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
+def make(df_tr: pd.DataFrame, table_tr_id: dict, df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
 
     # keep only rows where both beach widths exist (shorelinerx and insitu)
     mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
     df_dbw = df_dbw[mask_valid]
+
+    # transects
+    layout_tr = transects(df_tr, table_tr_id, odir)
 
     # timeseries of shorelinerx and insitu waterline position
     layout_ts = timeseries(df_dbw)
@@ -236,8 +289,8 @@ def make(df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
     layout_stats = statistics(df_dbw, df_stats, site)
 
     # gather timeseries and stats plots in a single page, using a radio button group
-    labels = ['Timeseries', 'Statistics']
-    layouts_val = [layout_ts, layout_stats]
+    labels = ['Transects', 'Timeseries', 'Statistics']
+    layouts_val = [layout_tr, layout_ts, layout_stats]
 
     # --- Radio button group ---
     radio = RadioButtonGroup(

@@ -1,6 +1,7 @@
 site: 'narrabeen'
-f_sx_bw: '/home/florent/Projects/Shoreliner_CNES/validation/runs/narrabeen/reference_shoreline/intersections.parquet' # shorelinerx intersections results' file
+f_sx_bw: '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/narrabeen/reference_shoreline/intersections.parquet' # shorelinerx intersections results' file
 f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet' # groundtruth beach profile's file
+f_tr: '/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/compatible_sx/NARRABEEN_transects.parquet'
 table_tr_id: # correspondance of transect ids
   0: 'PF1'
   1: 'PF2'

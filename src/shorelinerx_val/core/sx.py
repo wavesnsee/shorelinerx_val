@@ -1,4 +1,14 @@
 import pandas as pd
+import geopandas as gpd
+
+
+def read_transects(f_tr):
+    '''
+    read transects
+    '''
+
+    return gpd.read_parquet(f_tr)
+
 
 def read_bw(f_sx_bw, table_tr_id: dict):
     '''

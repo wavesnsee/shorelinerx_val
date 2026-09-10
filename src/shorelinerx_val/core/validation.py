@@ -105,15 +105,20 @@ def compute_d_bw(df_bw: pd.DataFrame, df_bp: pd.DataFrame, table_tr_id: dict):
     return df_bw
 
 
-def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, site: str, odir: Path):
+def run(f_sx_bw: Path, f_insitu_bp: Path, f_tr: Path, table_tr_id: dict, site: str, odir: Path):
     '''
 
     :param f_sx_bw: intersections file (geoparquet) from shorelinerx
     :param f_insitu_bp: file (geoparquet) of insitu  beach profile
+    :param d_tr: file (geoparquet) of transects, where waterline position has been computed, and groundtruth
+    beach profile extracted
     :param table_tr_id: dictionnary of correspondance for transect ids betwen sx and groundtruth
     :param odir: path for output directory
     :return: statistics waterline position at transects (shorelinerx vs groundtruth)
     '''
+
+    # read transects
+    df_tr = sx.read_transects(f_tr)
 
     # read insitu beach profiles
     df_bp = insitu.read_bp(f_insitu_bp)
@@ -128,6 +133,6 @@ def run(f_sx_bw: Path, f_insitu_bp: Path, table_tr_id: dict, site: str, odir: Pa
     df_stats = stats.validation_metrics(df_dbw)
 
     # plot validation stats
-    plot.make(df_dbw, df_stats, site, odir)
+    plot.make(df_tr, table_tr_id, df_dbw, df_stats, site, odir)
 
     return

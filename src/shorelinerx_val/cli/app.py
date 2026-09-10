@@ -15,6 +15,7 @@ class AppConfig(BaseModel):
     site: str
     f_sx_bw: Path
     f_insitu_bp: Path
+    f_tr: Path
     table_tr_id: dict
     odir: Path
 
