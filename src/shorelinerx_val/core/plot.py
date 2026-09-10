@@ -65,8 +65,12 @@ def timeseries(df_dbw:pd.DataFrame):
     plot timeseries of shorelinerx and groundtruth position along validation transects
     '''
 
+    # mission
+    mission = np.unique(df_dbw['mission'])[0]
+
     # Create a global title using a Div
-    global_title = Div(text="<h2>Timeseries of waterline position along transects</h2>", sizing_mode='stretch_width')
+    global_title = Div(text=f"<h2>Timeseries of waterline position along transects, groundtruth vs "
+                            f"shorelinerx (mission: {mission})</h2>", sizing_mode='stretch_width')
 
     # tmin, tmax
     tmin = df_dbw['datetime_utc'].min()
@@ -149,8 +153,11 @@ def statistics(df_dbw, df_stats, site):
     # stats table
     p4 = table(df_stats)
 
+    # mission
+    mission = np.unique(df_dbw['mission'])[0]
+
     # Add global title
-    title = Div(text=f"<h2>Shorelinerx validation statistics at {site}</h2>", align="center",
+    title = Div(text=f"<h2>Shorelinerx validation statistics at {site} for mission {mission}</h2>", align="center",
                 styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
     layout_stats = row(p1, p2)
     layout_stats = column(title, layout_stats, Spacer(height=30), row(p3, p4))
@@ -324,7 +331,22 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, df_dbw: pd.DataFrame, df_stats:
     radio = RadioButtonGroup(
         labels=labels,
         active=0,
-        button_type="success"
+        stylesheets=["""
+            .bk-btn {
+                background-color: #378ADD;
+                color: white;
+            }
+            .bk-btn:hover {
+            background-color: #3a5a8f;
+            color: white
+            }
+            .bk-btn.bk-active {
+                background-color: #2a4a7a;
+            }
+            .bk-btn.bk-active:hover {
+            background-color: #1f3a63
+            }
+            """]
     )
 
     # Set initial visibility: only the first layout is visible
