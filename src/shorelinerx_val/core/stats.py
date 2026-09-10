@@ -17,6 +17,7 @@ def validation_metrics(df_dbw: pd.DataFrame):
     mae = []
     rmse = []
     corr = []
+    n_samples = []
 
     # keep only rows where both beach widhts exist (shorelinerx and insitu)
     mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
@@ -46,6 +47,8 @@ def validation_metrics(df_dbw: pd.DataFrame):
         std.append(d.std())
         mae.append(d.abs().mean())
         rmse.append(np.sqrt((d ** 2).mean()))
+        n_samples.append(len(d))
+
         if len(bw_sx) > 1:
             corr.append(np.corrcoef(bw_sx.to_numpy(dtype=float), bw_insitu.to_numpy(dtype=float))[0, 1])
         else:
@@ -59,7 +62,8 @@ def validation_metrics(df_dbw: pd.DataFrame):
         'std': std,
         'mae': mae,
         'rmse': rmse,
-        'corr': corr
+        'corr': corr,
+        'n_samples': n_samples
     })
 
     return df_stats

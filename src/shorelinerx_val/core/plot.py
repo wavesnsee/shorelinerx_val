@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from bokeh.models import (CustomJS, WMTSTileSource, RadioButtonGroup, Label, RangeTool, Range1d, HoverTool,
-                          ColumnDataSource, Div, Spacer)
+                          ColumnDataSource, Div, Spacer, DataTable, TableColumn, NumberFormatter)
+from bokeh.transform import linear_cmap
 from bokeh.plotting import figure, save, output_file
 from bokeh.layouts import column, row, gridplot
 
@@ -145,11 +146,14 @@ def statistics(df_dbw, df_stats, site):
     # histogram of error
     p3 = histo_error(df_dbw)
 
+    # stats table
+    p4 = table(df_stats)
+
     # Add global title
     title = Div(text=f"<h2>Shorelinerx validation statistics at {site}</h2>", align="center",
                 styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
     layout_stats = row(p1, p2)
-    layout_stats = column(title, layout_stats, Spacer(height=30), p3)
+    layout_stats = column(title, layout_stats, Spacer(height=30), row(p3, p4))
 
     return layout_stats
 
@@ -189,17 +193,6 @@ def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
     # labels
     p1.line(lim, lim, line_dash="dashed", line_color="black", line_width=1.5)
 
-    label_mae = Label(
-        x=150, y=70, x_units="screen", y_units="screen",
-        text=f"MAE (m): {df_stats[df_stats['transect'] == 'ALL']['mae'].squeeze():.2f}", text_color="white", text_font_size="10px",
-        background_fill_color="#185fa5", background_fill_alpha=0.75, border_line_color="white", padding=6, visible=True
-    )
-    label_rmse = Label(
-        x=150, y=40, x_units="screen", y_units="screen",
-        text=f"RMSE (m): {df_stats[df_stats['transect'] == 'ALL']['rmse'].squeeze():.2f}", text_color="white",
-        text_font_size="10px",
-        background_fill_color="#185fa5", background_fill_alpha=0.75, border_line_color="white", padding=6, visible=True
-    )
     label_corr = Label(
         x=150, y=10, x_units="screen", y_units="screen",
         text=f"R2: {df_stats[df_stats['transect'] == 'ALL']['corr'].squeeze():.2f}", text_color="white",
@@ -207,8 +200,6 @@ def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
         background_fill_color="#185fa5", background_fill_alpha=0.75, border_line_color="white", padding=6, visible=True
     )
 
-    p1.add_layout(label_mae)
-    p1.add_layout(label_rmse)
     p1.add_layout(label_corr)
 
     return p1
@@ -233,7 +224,7 @@ def box_error(df_dbw: pd.DataFrame):
         title="Distribution of the error",
         x_range=labels,
         y_axis_label="Value (m)",
-        width=400, height=400,
+        width=450, height=400,
     )
 
     # IQR box
@@ -259,8 +250,10 @@ def histo_error(df_dbw: pd.DataFrame):
         title="Error histogram  (shorelinerx − groundtruth)",
         x_axis_label="Error (m)",
         y_axis_label="Count",
-        width=1090, height=400,
+        width=400, height=400,
     )
+    p3.x_range = Range1d(-30, 30)
+
     p3.quad(
         top=hist, bottom=0,
         left=edges[:-1], right=edges[1:],
@@ -271,6 +264,41 @@ def histo_error(df_dbw: pd.DataFrame):
             line_dash="dashed", line_color="#444441", line_width=1.5)
 
     return p3
+
+
+def table(df_stats):
+
+    source = ColumnDataSource(data=df_stats.round(2))
+
+    columns = [
+        TableColumn(field="transect", title="Transect"),
+        TableColumn(field="mae", title="MAE (m)",
+                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
+                            field_name="mae", palette="RdYlGn9", low=4, high=12))),
+        TableColumn(field="rmse", title="RMSE (m)",
+                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
+                        field_name="rmse", palette="RdYlGn9", low=4, high=12))),
+        TableColumn(field="mean", title="Bias (m)",
+                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
+                        field_name="mae", palette="RdYlGn9", low=4, high=12))),
+        TableColumn(field="std", title="std (m)",
+                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
+                        field_name="mae", palette="RdYlGn9", low=4, high=12))),
+        TableColumn(field="n_samples", title="n_samples")
+    ]
+
+    data_table = DataTable(source=source, columns=columns, width=450, height=400, index_position=None,
+                           stylesheets=["""
+                                   .slick-header-column {
+                                       font-weight: bold;
+                                       font-size: 13px;
+                                   }
+                                   .slick-cell {
+                                       font-size: 13px;
+    }
+                               """],
+                           )
+    return data_table
 
 
 def make(df_tr: pd.DataFrame, table_tr_id: dict, df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
