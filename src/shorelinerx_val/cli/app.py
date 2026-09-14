@@ -10,10 +10,14 @@ from shorelinerx_val.cli import val
 
 app = typer.Typer(no_args_is_help=True)
 
+class SatWaterlines(BaseModel):
+    id: list[str]
+    path: list[Path]
+    color: list[str]
 
 class AppConfig(BaseModel):
     site: str
-    f_sx_bw: Path
+    sdi: SatWaterlines
     f_insitu_bp: Path
     f_tr: Path
     table_tr_id: dict
@@ -39,8 +43,9 @@ def main(
     # load configuration file
     conf = load_config(input_yaml)
 
-    if not conf.f_sx_bw.exists():
-        raise typer.Exit("Shorelinerx intersections results' file does not exist")
+    for _, f_inters in enumerate(conf.sdi.path):
+        if not f_inters.exists():
+            raise typer.Exit(f"Satellite derived intersections file {f_inters} does not exist")
     if not conf.f_insitu_bp.exists():
         raise typer.Exit("groundtruth beach profile's file")
 

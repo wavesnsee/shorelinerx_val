@@ -7,7 +7,7 @@ from bokeh.transform import linear_cmap
 from bokeh.plotting import figure, save, output_file
 from bokeh.layouts import column, row, gridplot
 
-from shorelinerx_val.core import stats
+from shorelinerx_val.core import stats, sx
 
 
 def osm_tile(tile_choice: str):
@@ -60,39 +60,37 @@ def transects(df_tr: pd.DataFrame, table_tr_id:dict, odir):
     return p
 
 
-def timeseries(df_dbw:pd.DataFrame):
+def timeseries(ls_df_dbw:list[pd.DataFrame], mission: str, sdi_id: list[str], sdi_color: list[str]):
     '''
     plot timeseries of shorelinerx and groundtruth position along validation transects
     '''
 
-    # mission
-    mission = np.unique(df_dbw['mission'])[0]
-
     # Create a global title using a Div
     global_title = Div(text=f"<h2>Timeseries of waterline position along transects, groundtruth vs "
-                            f"shorelinerx (mission: {mission})</h2>", sizing_mode='stretch_width')
+                            f"{' / '.join(sdi_id)}, mission: {mission}</h2>", sizing_mode='stretch_width')
 
     # tmin, tmax
-    tmin = df_dbw['datetime_utc'].min()
-    tmax = df_dbw['datetime_utc'].max()
+    tmin = np.min([df_dbw['datetime_utc'].min() for df_dbw in ls_df_dbw])
+    tmax = np.max([df_dbw['datetime_utc'].max() for df_dbw in ls_df_dbw])
     x_range = Range1d(tmin, tmax)
 
     # list of transects
-    list_transects = sorted(list(set(df_dbw['transect_id'])))
+    list_transects = sorted(list(set(ls_df_dbw[0]['transect_id'])))
 
-    def subplot(df_dbw, tr, x_range):
-
-        # Create a ColumnDataSource from dataframe df_dbw
-        source = ColumnDataSource(df_dbw[df_dbw['transect_id'] == tr])
+    def subplot(ls_df_dbw, tr, x_range, sdi_id, sdi_color):
 
         p = figure(sizing_mode='stretch_width', height=200,
                    title=f"Waterline position along transect {tr}",
                    x_range=x_range)
 
-        p.line('datetime_utc', 'bw_insitu_m', source=source, legend_label="groundtruth",
-               line_color="black", line_width=1.5)
-        p.line('datetime_utc', 'beach_width_m', source=source, legend_label="shorelinerx",
-               line_color="#378ADD", line_width=1.5)
+        for i, df_dbw in enumerate(ls_df_dbw):
+            # Create a ColumnDataSource from dataframe df_dbw
+            source = ColumnDataSource(df_dbw[df_dbw['transect_id'] == tr])
+            if i == 0:
+                p.line('datetime_utc', 'bw_insitu_m', source=source, legend_label="groundtruth",
+                       line_color="black", line_width=1.5)
+            p.line('datetime_utc', 'beach_width_m', source=source, legend_label=sdi_id[i],
+                   line_color=sdi_color[i], line_width=1.5)
 
         p.yaxis.axis_label = f'Waterline position (m)'
         p.legend.click_policy = "hide"
@@ -126,57 +124,72 @@ def timeseries(df_dbw:pd.DataFrame):
 
         return select
 
-    p_ts = [subplot(df_dbw, tr, x_range) for tr in list_transects]
+    p_ts = [subplot(ls_df_dbw, tr, x_range, sdi_id, sdi_color) for tr in list_transects]
 
     # use the last transect's data to build the selector plot at the bottom
-    selector = range_tool_selector(df_dbw, list_transects[-1], x_range, tmin, tmax)
+    selector = range_tool_selector(ls_df_dbw[0], list_transects[-1], x_range, tmin, tmax)
 
     layout = column(global_title, *p_ts, selector, sizing_mode='stretch_width')
 
     return layout
 
 
-def statistics(df_dbw, df_stats, site):
+def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], site, mission, sdi_id: list[str],
+               sdi_color: list[str]):
     '''
     plot statistics of difference between shorelinerx and groundtruth position along validation transects
     '''
 
     # scatter
-    p1 = scatter(df_dbw, df_stats)
+    p1 = scatter(ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
 
     # box distribution of the error
-    p2 = box_error(df_dbw)
+    p2 = box_error(ls_df_dbw, sdi_id, sdi_color)
 
     # histogram of error
-    p3 = histo_error(df_dbw)
+    p3 = histo_error(ls_df_dbw, sdi_id, sdi_color)
 
     # stats table
-    p4 = table(df_stats)
-
-    # mission
-    mission = np.unique(df_dbw['mission'])[0]
+    p4 = table(ls_df_stats, sdi_id, sdi_color)
 
     # Add global title
-    title = Div(text=f"<h2>Shorelinerx validation statistics at {site} for mission {mission}</h2>", align="center",
+    title = Div(text=f"<h2>{(' / ').join(sdi_id)} validation statistics at {site} for mission {mission}</h2>", align="center",
                 styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
-    layout_stats = row(p1, p2)
-    layout_stats = column(title, layout_stats, Spacer(height=30), row(p3, p4))
+    layout_stats = row(p1, p2, p3)
+    layout_stats = column(title, layout_stats, Spacer(height=60), p4)
 
     return layout_stats
 
 
-def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
+def scatter(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], sdi_id: list[str],
+            sdi_color: list[str]):
 
     p1 = figure(
-        title="Shorelinerx vs Groundtruth waterline position",
+        title=f"{', '.join(sdi_id)} vs Groundtruth waterline position",
         x_axis_label="Groundtruth waterline position along transects (m)",
-        y_axis_label="Shorelinerx waterline position along transects (m)",
+        y_axis_label="Sat derived waterline position along transects (m)",
         match_aspect=True,
         width=400, height=400,
     )
 
-    # Create a ColumnDataSource from dataframe df_dbw
-    source = ColumnDataSource(df_dbw)
+    def sub_scatter(p1, ls_df_dbw, ls_df_stats, sdi_id, sdi_color):
+
+        for i, df_dbw in enumerate(ls_df_dbw):
+
+            # Create a ColumnDataSource from dataframe df_dbw
+            source = ColumnDataSource(df_dbw)
+
+            # corr
+            df_stats = ls_df_stats[i]
+            r2 = f", R2: {df_stats[df_stats['transect'] == 'ALL']['corr'].squeeze():.2f}"
+
+            p1.scatter(
+                x='bw_insitu_m', y='beach_width_m',
+                size=4, alpha=0.8,
+                color=sdi_color[i], line_color="white", line_width=0.5, source=source, legend_label=sdi_id[i] + r2
+            )
+
+        return
 
     # Add hover tool that shows product_id
     hover = HoverTool(
@@ -188,44 +201,24 @@ def scatter(df_dbw: pd.DataFrame, df_stats: pd.DataFrame):
     )
     p1.add_tools(hover)
 
-    p1.scatter(
-        x='bw_insitu_m', y='beach_width_m',
-        size=4, alpha=0.8,
-        color="#378ADD", line_color="white", line_width=0.5, source=source
-    )
+    # scatter plots
+    sub_scatter(p1, ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
+
     # 1:1 reference line
-    lim = [np.min([df_dbw['bw_insitu_m'].min(), df_dbw['beach_width_m'].min()]),
-           np.max([df_dbw['bw_insitu_m'].max(), df_dbw['beach_width_m'].max()])
-           ]
-    # labels
+    bw_min = np.min([df_dbw['beach_width_m'].min() for df_dbw in ls_df_dbw])
+    bw_max = np.max([df_dbw['beach_width_m'].max() for df_dbw in ls_df_dbw])
+
+    lim = [bw_min, bw_max]
     p1.line(lim, lim, line_dash="dashed", line_color="black", line_width=1.5)
 
-    label_corr = Label(
-        x=150, y=10, x_units="screen", y_units="screen",
-        text=f"R2: {df_stats[df_stats['transect'] == 'ALL']['corr'].squeeze():.2f}", text_color="white",
-        text_font_size="10px",
-        background_fill_color="#185fa5", background_fill_alpha=0.75, border_line_color="white", padding=6, visible=True
-    )
-
-    p1.add_layout(label_corr)
+    p1.legend.click_policy = "hide"
 
     return p1
 
 
-def box_error(df_dbw: pd.DataFrame):
+def box_error(ls_df_dbw: list[pd.DataFrame], sdi_id: list[str], sdi_color: list[str]):
 
-    statistics = [stats.box_stats(df_dbw['d_bw_insitu_m'], 'error')]
-
-    labels = [s["label"] for s in statistics]
-    src = ColumnDataSource(dict(
-        x=labels,
-        q1=[s["q1"] for s in statistics],
-        q2=[s["q2"] for s in statistics],
-        q3=[s["q3"] for s in statistics],
-        upper=[s["upper"] for s in statistics],
-        lower=[s["lower"] for s in statistics],
-        color=["#1D9E75"],
-    ))
+    labels = [f"error_{sdi_id[i]}" for i in range(len(ls_df_dbw))]
 
     p2 = figure(
         title="Distribution of the error",
@@ -234,24 +227,41 @@ def box_error(df_dbw: pd.DataFrame):
         width=450, height=400,
     )
 
-    # IQR box
-    p2.vbar(x="x", top="q3", bottom="q1", width=0.5,
-            source=src, alpha=0.6)
-    # Whiskers
-    p2.segment("x", "upper", "x", "q3", source=src, line_color="black")
-    p2.segment("x", "lower", "x", "q1", source=src, line_color="black")
-    # Whisker caps
-    p2.rect("x", "upper", 0.2, 0.0001, source=src, line_color="black")
-    p2.rect("x", "lower", 0.2, 0.0001, source=src, line_color="black")
-    # Median line
-    p2.rect("x", "q2", 0.5, 0.0001, source=src,
-            line_color="white", line_width=2)
+    for i, (df_dbw, label, color) in enumerate(zip(ls_df_dbw, labels, sdi_color)):
+        s = stats.box_stats(df_dbw['d_bw_insitu_m'], 'error')
+
+        src = ColumnDataSource(dict(
+            x=[label],
+            q1=[s["q1"]],
+            q2=[s["q2"]],
+            q3=[s["q3"]],
+            upper=[s["upper"]],
+            lower=[s["lower"]],
+            color=[color],
+        ))
+
+        # IQR box
+        p2.vbar(x="x", top="q3", bottom="q1", width=0.5,
+                source=src, fill_color="color", line_color="black",
+                fill_alpha=0.6)
+        # Whiskers
+        p2.segment("x", "upper", "x", "q3", source=src,
+                   line_color="black")
+        p2.segment("x", "lower", "x", "q1", source=src,
+                   line_color="black")
+        # Whisker caps
+        p2.rect("x", "upper", 0.2, 0.0001, source=src,
+                line_color="black")
+        p2.rect("x", "lower", 0.2, 0.0001, source=src,
+                line_color="black")
+        # Median line
+        p2.rect("x", "q2", 0.5, 0.0001, source=src,
+                line_color="white", line_width=2)
 
     return p2
 
 
-def histo_error(df_dbw: pd.DataFrame):
-    hist, edges = np.histogram(df_dbw['d_bw_insitu_m'], bins=150)
+def histo_error(ls_df_dbw: list[pd.DataFrame], sdi_id: list[str], sdi_color: list[str]):
 
     p3 = figure(
         title="Error histogram  (shorelinerx − groundtruth)",
@@ -259,69 +269,122 @@ def histo_error(df_dbw: pd.DataFrame):
         y_axis_label="Count",
         width=400, height=400,
     )
-    p3.x_range = Range1d(-30, 30)
 
-    p3.quad(
-        top=hist, bottom=0,
-        left=edges[:-1], right=edges[1:],
-        fill_color="#378ADD", line_color="white", alpha=0.8,
-    )
+    # bin edges
+    bin_edges = np.arange(-20, 20.1, 1)
+
+    for i, df_dbw in enumerate(ls_df_dbw):
+        hist, edges = np.histogram(df_dbw['d_bw_insitu_m'], bins=bin_edges)
+
+        p3.x_range = Range1d(-30, 30)
+
+        p3.quad(
+            top=hist, bottom=0,
+            left=edges[:-1], right=edges[1:],
+            fill_color=sdi_color[i], line_color="white", alpha=0.8, legend_label=sdi_id[i]
+        )
     # Zero-error reference
     p3.line([0, 0], [0, hist.max()],
             line_dash="dashed", line_color="#444441", line_width=1.5)
 
+    p3.legend.click_policy = "hide"
+    p3.legend.location = "top_right"
+
     return p3
 
 
-def table(df_stats):
+def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
 
-    source = ColumnDataSource(data=df_stats.round(2))
+    # backward compatibility: allow a single DataFrame too
+    if isinstance(ls_df_stats, pd.DataFrame):
+        ls_df_stats = [ls_df_stats]
 
-    columns = [
-        TableColumn(field="transect", title="Transect"),
-        TableColumn(field="mae", title="MAE (m)",
-                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
-                            field_name="mae", palette="RdYlGn9", low=4, high=12))),
-        TableColumn(field="rmse", title="RMSE (m)",
-                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
-                        field_name="rmse", palette="RdYlGn9", low=4, high=12))),
-        TableColumn(field="mean", title="Bias (m)",
-                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
-                        field_name="mae", palette="RdYlGn9", low=4, high=12))),
-        TableColumn(field="std", title="std (m)",
-                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
-                        field_name="mae", palette="RdYlGn9", low=4, high=12))),
-        TableColumn(field="n_samples", title="n_samples")
-    ]
+    n = len(ls_df_stats)
+    
+    stat_cols = ["mae", "rmse", "mean", "std", "n_samples"]
 
-    data_table = DataTable(source=source, columns=columns, width=450, height=400, index_position=None,
-                           stylesheets=["""
-                                   .slick-header-column {
-                                       font-weight: bold;
-                                       font-size: 13px;
-                                   }
-                                   .slick-cell {
-                                       font-size: 13px;
+    df_merged = None
+    for df, label in zip(ls_df_stats, sdi_id):
+        df_renamed = df[["transect"] + stat_cols].rename(
+            columns={c: f"{c}_{label}" for c in stat_cols}
+        )
+        df_merged = df_renamed if df_merged is None else df_merged.merge(df_renamed, on="transect", how="outer")
+
+    source = ColumnDataSource(data=df_merged.round(2))
+
+    stat_titles = {
+        "mae": "MAE (m)", "rmse": "RMSE (m)", "mean": "Bias (m)",
+        "std": "std (m)", "n_samples": "n_samples",
     }
-                               """],
+
+    columns = [TableColumn(field="transect", title="Transect")]
+    header_rules = []  # one CSS rule per colored header
+
+    # position 1 = "Transect" (no color); data columns start at position 2
+    pos = 2
+    for stat in stat_cols:
+        for i, label in enumerate(sdi_id):
+            field = f"{stat}_{label}"
+            # title = f"{stat_titles[stat]} [{label}]" if n > 1 else stat_titles[stat]
+            title = f"{stat_titles[stat]}" if n > 1 else stat_titles[stat]
+
+            if stat == "n_samples":
+                columns.append(TableColumn(field=field, title=title))
+            else:
+                columns.append(TableColumn(
+                    field=field, title=title,
+                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
+                        field_name=field, palette="RdYlGn9", low=4, high=12))
+                ))
+
+            # color = label_color[label]
+            color = sdi_color[i]
+            header_rules.append(
+                f".slick-header-column:nth-child({pos}) {{ background-color: {color} !important; color: white !important; }}"
+            )
+            pos += 1
+
+    header_css = "\n".join(header_rules)
+
+    data_table = DataTable(source=source, columns=columns,
+                           width=450 * max(n, 1) if n > 1 else 450, height=400,
+                           index_position=None,
+                           stylesheets=[f"""
+                                        .slick-header-column {{
+                                            font-weight: bold;
+                                            font-size: 13px;
+                                        }}
+                                        .slick-cell {{
+                                            font-size: 13px;
+                                        }}
+                                        {header_css}
+                                    """],
                            )
-    return data_table
+    title = Div(text="<b>Validation statistics by transect, and globally (ALL) </b>", styles={"font-size": "12px"})
+    table_with_title = column(title, data_table)
+    return table_with_title
 
 
-def make(df_tr: pd.DataFrame, table_tr_id: dict, df_dbw: pd.DataFrame, df_stats: pd.DataFrame, site: str, odir: Path):
+def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame],
+         site: str, sdi_id: list[str], sdi_color: list[str], odir: Path):
 
-    # keep only rows where both beach widths exist (shorelinerx and insitu)
-    mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
-    df_dbw = df_dbw[mask_valid]
+    # keep only rows where both waterline positions exist (sat and insitu)
+    for i, df_dbw in enumerate(ls_df_dbw):
+        mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
+        df_dbw = df_dbw[mask_valid]
+        ls_df_dbw[i] = df_dbw
+
+    # mission
+    mission = sx.read_mission_name(df_dbw)
 
     # transects
     layout_tr = transects(df_tr, table_tr_id, odir)
 
-    # timeseries of shorelinerx and insitu waterline position
-    layout_ts = timeseries(df_dbw)
+    # timeseries of sat and insitu waterline position
+    layout_ts = timeseries(ls_df_dbw, mission, sdi_id, sdi_color)
 
     # stats
-    layout_stats = statistics(df_dbw, df_stats, site)
+    layout_stats = statistics(ls_df_dbw, ls_df_stats, site, mission, sdi_id, sdi_color)
 
     # gather timeseries and stats plots in a single page, using a radio button group
     labels = ['Transects', 'Timeseries', 'Statistics']
@@ -364,7 +427,7 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, df_dbw: pd.DataFrame, df_stats:
     layout = column(radio, *layouts_val, sizing_mode='stretch_width')
 
     # save
-    f_out = odir.joinpath(f'validation_sx_{site}.html')
+    f_out = odir.joinpath(f'validation_sx_{site}_{mission}.html')
     output_file(f_out)
     print('\n --> %s \n' %f_out)
     save(layout, title='Validation Shorelinerx')
