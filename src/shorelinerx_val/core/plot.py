@@ -427,7 +427,7 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], 
     layout = column(radio, *layouts_val, sizing_mode='stretch_width')
 
     # save
-    f_out = odir.joinpath(f'validation_sx_{site}_{mission}.html')
+    f_out = odir.joinpath(f'validation_{site}_{mission}_{'_'.join(sdi_id)}.html')
     output_file(f_out)
     print('\n --> %s \n' %f_out)
     save(layout, title='Validation Shorelinerx')
