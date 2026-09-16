@@ -304,6 +304,15 @@ wheels = [
 ]
 
 [[package]]
+name = "esmbenchmarkviz"
+version = "0.2.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/be/6432395563353abaf937701b66676cbab434df7c7fc22716ad7ab63b4361/esmbenchmarkviz-0.2.2.tar.gz", hash = "sha256:b7bafaf7c2efa80cb8fcc0e785ffc0f7e8765082519a92235164259b63adeae9", size = 25033, upload-time = "2026-06-17T21:32:31.066Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/26/d4/05588d979b7cd2631d1a47cee9de2cc133f92fcf2c0bbd99ffc7dedcd22c/esmbenchmarkviz-0.2.2-py3-none-any.whl", hash = "sha256:b5763ed90647a1c331e317038575518684e933ef91101c71b0c84d482547a489", size = 25278, upload-time = "2026-06-17T21:32:30.022Z" },
+]
+
+[[package]]
 name = "fastparquet"
 version = "2026.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1291,6 +1300,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "bokeh" },
+    { name = "esmbenchmarkviz" },
     { name = "fastparquet" },
     { name = "geopandas" },
     { name = "matplotlib" },
@@ -1309,6 +1319,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "bokeh", specifier = ">=3.9.2" },
+    { name = "esmbenchmarkviz", specifier = ">=0.2.2" },
     { name = "fastparquet", specifier = ">=2026.5.0" },
     { name = "geopandas", specifier = ">=1.1.4" },
     { name = "matplotlib", specifier = ">=3.11.1" },

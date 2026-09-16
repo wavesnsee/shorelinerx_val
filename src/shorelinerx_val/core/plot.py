@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from ESMBenchmarkViz import taylor_diagram
 from bokeh.models import (CustomJS, WMTSTileSource, RadioButtonGroup, Label, RangeTool, Range1d, HoverTool,
                           ColumnDataSource, Div, Spacer, DataTable, TableColumn, NumberFormatter)
 from bokeh.transform import linear_cmap
 from bokeh.plotting import figure, save, output_file
-from bokeh.layouts import column, row, gridplot
+from bokeh.layouts import column, row
 
 from shorelinerx_val.core import stats, sx
 
@@ -132,33 +133,6 @@ def timeseries(ls_df_dbw:list[pd.DataFrame], mission: str, sdi_id: list[str], sd
     layout = column(global_title, *p_ts, selector, sizing_mode='stretch_width')
 
     return layout
-
-
-def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], site, mission, sdi_id: list[str],
-               sdi_color: list[str]):
-    '''
-    plot statistics of difference between shorelinerx and groundtruth position along validation transects
-    '''
-
-    # scatter
-    p1 = scatter(ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
-
-    # box distribution of the error
-    p2 = box_error(ls_df_dbw, sdi_id, sdi_color)
-
-    # histogram of error
-    p3 = histo_error(ls_df_dbw, sdi_id, sdi_color)
-
-    # stats table
-    p4 = table(ls_df_stats, sdi_id, sdi_color)
-
-    # Add global title
-    title = Div(text=f"<h2>{(' / ').join(sdi_id)} validation statistics at {site} for mission {mission}</h2>", align="center",
-                styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
-    layout_stats = row(p1, p2, p3)
-    layout_stats = column(title, layout_stats, Spacer(height=60), p4)
-
-    return layout_stats
 
 
 def scatter(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], sdi_id: list[str],
@@ -347,7 +321,7 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
     header_css = "\n".join(header_rules)
 
     data_table = DataTable(source=source, columns=columns,
-                           width=450 * max(n, 1) if n > 1 else 450, height=400,
+                           width=400 * max(n, 1) if n > 1 else 450, height=400,
                            index_position=None,
                            stylesheets=[f"""
                                         .slick-header-column {{
@@ -365,17 +339,61 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
     return table_with_title
 
 
+def taylor(ls_df_stats, ls_df_dbw, sdi_id, sdi_color):
+
+    if len(ls_df_stats) < 2:
+        return None
+    else:
+        corrs = [ls_df_stats[i][ls_df_stats[i]['transect']=='ALL']['corr'].values[0] for i in range(len(ls_df_stats))]
+        std_devs = [ls_df_dbw[i]['beach_width_m'].std() for i in range(len(ls_df_dbw))]
+        refstd = ls_df_dbw[0]['bw_insitu_m'].std()
+
+    p5 = taylor_diagram(std_devs, corrs, sdi_id, refstd, normalize=True, step=0.1, reference_name='groundtruth',
+                        colormap=sdi_color, bokeh_logo=False, width=400, show_plot=False)
+
+    return p5
+
+def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], site, mission, sdi_id: list[str],
+               sdi_color: list[str]):
+    '''
+    plot statistics of difference between sat waterlines and groundtruth position along validation transects
+    '''
+
+    # scatter
+    p1 = scatter(ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
+
+    # box distribution of the error
+    p2 = box_error(ls_df_dbw, sdi_id, sdi_color)
+
+    # histogram of error
+    p3 = histo_error(ls_df_dbw, sdi_id, sdi_color)
+
+    # stats table
+    p4 = table(ls_df_stats, sdi_id, sdi_color)
+
+    # taylor diagram
+    if len(ls_df_dbw) > 1:
+        p5 = taylor(ls_df_stats, ls_df_dbw, sdi_id, sdi_color)
+
+    # Add global title
+    title = Div(text=f"<h2>{(' / ').join(sdi_id)} validation statistics at {site} for mission {mission}</h2>", align="center",
+                styles={"margin-bottom": "10px"}, sizing_mode='stretch_width')
+    layout_stats = row(p1, p2, p3)
+    if len(ls_df_dbw) > 1:
+        layout_stats = column(title, layout_stats, Spacer(height=40), row(p5, Spacer(width=20), p4))
+    else:
+        layout_stats = column(title, layout_stats, Spacer(height=40), p4)
+
+
+    return layout_stats
+
+
+
 def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame],
          site: str, sdi_id: list[str], sdi_color: list[str], odir: Path):
 
-    # keep only rows where both waterline positions exist (sat and insitu)
-    for i, df_dbw in enumerate(ls_df_dbw):
-        mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
-        df_dbw = df_dbw[mask_valid]
-        ls_df_dbw[i] = df_dbw
-
     # mission
-    mission = sx.read_mission_name(df_dbw)
+    mission = sx.read_mission_name(ls_df_dbw[0])
 
     # transects
     layout_tr = transects(df_tr, table_tr_id, odir)

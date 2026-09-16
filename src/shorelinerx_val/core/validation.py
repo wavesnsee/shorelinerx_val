@@ -19,6 +19,126 @@ def bracket_indices(times: pd.Series, target: pd.Timestamp):
         return idx - 1, idx
 
 
+import pandas as pd
+from functools import reduce
+
+import pandas as pd
+
+
+def sync_t_ls_df_dbw(ls_df_dbw, tol_hours=6, transect_col='transect_id',
+                      date_col='datetime_utc', value_col='beach_width_m'):
+    '''
+    Filter all dataframes in ls_df_dbw to keep only dates that have a
+    unique, mutual match (within `tol_hours`) across all dataframes,
+    matched separately within each transect_id group. Rows where
+    `value_col` is NaN are dropped before matching.
+
+    Each df is assumed to have a `date_col` column (default 'datetime_utc'),
+    a `transect_col` column, and a `value_col` column (default 'beach_width_m').
+    A match is only valid if timestamps agree within tolerance AND
+    transect_id is the same.
+    '''
+    tol = pd.Timedelta(hours=tol_hours)
+
+    def to_naive_ns(s):
+        s = pd.to_datetime(s)
+        if getattr(s.dt, 'tz', None) is not None:
+            s = s.dt.tz_convert('UTC').dt.tz_localize(None)
+        return s.astype('datetime64[ns]')
+
+    def add_sync_date(df):
+        '''Return a copy of df with a clean naive-ns '_sync_date' column,
+        restricted to rows where value_col is not NaN.'''
+        df2 = df[df[value_col].notna()].copy()
+        df2['_sync_date'] = to_naive_ns(df2[date_col]).values
+        return df2
+
+    def dedup_by_date(df):
+        '''Deduplicate on _sync_date (keep first), within a single transect group.'''
+        n_dupes = df['_sync_date'].duplicated().sum()
+        if n_dupes:
+            print(f"Warning: dropping {n_dupes} duplicate-timestamp rows "
+                  f"(keeping first) for transect {df[transect_col].iloc[0]!r}")
+        df2 = df.drop_duplicates(subset='_sync_date', keep='first')
+        return df2.sort_values('_sync_date').reset_index(drop=True)
+
+    def sync_group(dfs_group):
+        '''Run the date-matching logic on a list of dfs already restricted
+        to a single transect_id.'''
+        n = len(dfs_group)
+        clean = [dedup_by_date(df) for df in dfs_group]
+
+        ref = pd.DataFrame({'date_0': clean[0]['_sync_date'].values})
+
+        for i in range(1, n):
+            di = pd.DataFrame({f'date_{i}': clean[i]['_sync_date'].values})
+            merged = pd.merge_asof(
+                ref.sort_values('date_0'),
+                di.sort_values(f'date_{i}'),
+                left_on='date_0',
+                right_on=f'date_{i}',
+                direction='nearest',
+                tolerance=tol,
+            )
+
+            merged['_diff'] = (merged['date_0'] - merged[f'date_{i}']).abs()
+            is_dup = merged.duplicated(subset=[f'date_{i}'], keep=False) & merged[f'date_{i}'].notna()
+            if is_dup.any():
+                merged['_rank'] = merged.groupby(f'date_{i}')['_diff'].rank(method='first')
+                merged.loc[is_dup & (merged['_rank'] != 1), f'date_{i}'] = pd.NaT
+                merged = merged.drop(columns=['_rank'])
+
+            ref = merged.drop(columns=['_diff'])
+
+        ref = ref.dropna().reset_index(drop=True)
+
+        out = []
+        for i, df in enumerate(clean):
+            matched = ref[f'date_{i}'].values
+            filtered = df[df['_sync_date'].isin(matched)].reset_index(drop=True)
+            out.append(filtered)
+
+        lengths = [len(d) for d in out]
+        assert len(set(lengths)) == 1, f"row counts differ within transect group: {lengths}"
+
+        return out
+
+    n = len(ls_df_dbw)
+    if n == 0:
+        return ls_df_dbw
+
+    dfs_with_date = [add_sync_date(df) for df in ls_df_dbw]
+
+    # only keep transect_ids present in every dataframe (after the NaN filter)
+    common_transects = set(dfs_with_date[0][transect_col].unique())
+    for df in dfs_with_date[1:]:
+        common_transects &= set(df[transect_col].unique())
+    common_transects = sorted(common_transects)
+
+    # accumulate matched rows per dataframe, across all transect groups
+    out_per_df = [[] for _ in range(n)]
+    for tid in common_transects:
+        group = [df[df[transect_col] == tid] for df in dfs_with_date]
+        if any(len(g) == 0 for g in group):
+            continue
+        matched_group = sync_group(group)
+        for i, mg in enumerate(matched_group):
+            out_per_df[i].append(mg)
+
+    out = []
+    for i in range(n):
+        if out_per_df[i]:
+            combined = pd.concat(out_per_df[i], ignore_index=True).drop(columns='_sync_date')
+        else:
+            combined = ls_df_dbw[i].iloc[0:0]  # empty, same columns
+        out.append(combined)
+
+    lengths = [len(d) for d in out]
+    assert len(set(lengths)) == 1, f"row counts still differ: {lengths}"
+
+    return out
+
+
 def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id: dict):
     '''
     compute difference of waterline position between each satellite derived waterline dataset and insitu
@@ -108,6 +228,16 @@ def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id:
             df_bw.loc[mask, 'dt_insitu_days'] = pd.Series(dt_insitu, index=df_bw_tr.index, dtype=object)
 
         ls_df_dbw.append(df_bw)
+
+    if len(ls_df_dbw) > 1:
+        ls_df_dbw = sync_t_ls_df_dbw(ls_df_dbw)
+
+    # keep only rows where both waterline positions exist (sat and insitu)
+    mask_valid = np.ones(len(ls_df_dbw[0])).astype(bool)
+    for i, df_dbw in enumerate(ls_df_dbw):
+        mask_nonan = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
+        mask_valid = np.logical_and(mask_valid, mask_nonan)
+    ls_df_dbw = [ls_df_dbw[i][mask_valid] for i in range(len(ls_df_dbw))]
 
     return ls_df_dbw
 

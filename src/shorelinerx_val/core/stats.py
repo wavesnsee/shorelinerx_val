@@ -24,8 +24,8 @@ def validation_metrics(ls_df_dbw: list[pd.DataFrame]):
         n_samples = []
 
         # keep only rows where both beach widhts exist (shorelinerx and insitu)
-        mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
-        df_dbw = df_dbw[mask_valid]
+        # mask_valid = df_dbw[['beach_width_m', 'bw_insitu_m']].notna().all(axis=1)
+        # df_dbw = df_dbw[mask_valid]
 
         # compute stats by transect, and globally
         for tr in transects:
