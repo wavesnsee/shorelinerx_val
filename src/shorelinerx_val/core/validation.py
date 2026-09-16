@@ -25,7 +25,7 @@ from functools import reduce
 import pandas as pd
 
 
-def sync_t_ls_df_dbw(ls_df_dbw, tol_hours=6, transect_col='transect_id',
+def sync_t_ls_df_dbw(ls_df_dbw, tol_hours=1, transect_col='transect_id',
                       date_col='datetime_utc', value_col='beach_width_m'):
     '''
     Filter all dataframes in ls_df_dbw to keep only dates that have a
