@@ -90,8 +90,22 @@ def timeseries(ls_df_dbw:list[pd.DataFrame], mission: str, sdi_id: list[str], sd
             if i == 0:
                 p.line('datetime_utc', 'bw_insitu_m', source=source, legend_label="groundtruth",
                        line_color="black", line_width=1.5)
-            p.line('datetime_utc', 'beach_width_m', source=source, legend_label=sdi_id[i],
+            r = p.line('datetime_utc', 'beach_width_m', source=source, legend_label=sdi_id[i],
                    line_color=sdi_color[i], line_width=1.5)
+            if i == 0:
+                r0 = r
+
+        # Add hover tool
+        hover = HoverTool(
+            renderers=[r0],
+            tooltips=[
+                ("product id", "@product_id"),
+                ("cloud cover aoi", "@cloud_cover_aoi"),
+                ("n intersections", "@n_intersections")
+            ],
+            mode='mouse'
+        )
+        p.add_tools(hover)
 
         p.yaxis.axis_label = f'Waterline position (m)'
         p.legend.click_policy = "hide"
@@ -157,16 +171,22 @@ def scatter(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], sdi_
             df_stats = ls_df_stats[i]
             r2 = f", R2: {df_stats[df_stats['transect'] == 'ALL']['corr'].squeeze():.2f}"
 
-            p1.scatter(
+            r = p1.scatter(
                 x='bw_insitu_m', y='beach_width_m',
                 size=4, alpha=0.8,
                 color=sdi_color[i], line_color="white", line_width=0.5, source=source, legend_label=sdi_id[i] + r2
             )
+            if i == 0:
+                r0 = r
 
-        return
+        return r0
+
+    # scatter plots
+    r0 = sub_scatter(p1, ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
 
     # Add hover tool that shows product_id
     hover = HoverTool(
+        renderers=[r0],
         tooltips=[
             ("product id", "@product_id"),
             ("cloud cover aoi", "@cloud_cover_aoi"),
@@ -174,9 +194,6 @@ def scatter(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], sdi_
         mode='mouse'
     )
     p1.add_tools(hover)
-
-    # scatter plots
-    sub_scatter(p1, ls_df_dbw, ls_df_stats, sdi_id, sdi_color)
 
     # 1:1 reference line
     bw_min = np.min([df_dbw['beach_width_m'].min() for df_dbw in ls_df_dbw])
