@@ -243,7 +243,7 @@ def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id:
 
 
 def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_bp: Path, f_tr: Path, table_tr_id: dict,
-        site: str, odir: Path):
+        site: str, val_metrics_unit: str, pixel_res: int, odir: Path):
     '''
 
     :param f_sx_bw: intersections file (geoparquet) from shorelinerx
@@ -251,6 +251,8 @@ def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_
     :param d_tr: file (geoparquet) of transects, where waterline position has been computed, and groundtruth
     beach profile extracted
     :param table_tr_id: dictionnary of correspondance for transect ids betwen sx and groundtruth
+    :param: val_metrics_unit: validation metrics unit, either 'm' or 'pixel'
+    :param pixel_res: resolution of satellite image in meters
     :param odir: path for output directory
     :return: statistics waterline position at transects (shorelinerx vs groundtruth)
     '''
@@ -268,9 +270,9 @@ def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_
     ls_df_dbw = compute_d_bw(ls_df_bw, df_bp, table_tr_id)
 
     # compute validation metrics
-    ls_df_stats = stats.validation_metrics(ls_df_dbw)
+    ls_df_stats = stats.validation_metrics(ls_df_dbw, val_metrics_unit, pixel_res)
 
     # plot validation stats
-    plot.make(df_tr, table_tr_id, ls_df_dbw, ls_df_stats, site, sdi_id, sdi_color, odir)
+    plot.make(df_tr, table_tr_id, ls_df_dbw, ls_df_stats, site, sdi_id, sdi_color, val_metrics_unit, odir)
 
     return

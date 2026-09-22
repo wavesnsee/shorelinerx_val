@@ -284,7 +284,7 @@ def histo_error(ls_df_dbw: list[pd.DataFrame], sdi_id: list[str], sdi_color: lis
     return p3
 
 
-def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
+def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str], unit: str):
 
     # backward compatibility: allow a single DataFrame too
     if isinstance(ls_df_stats, pd.DataFrame):
@@ -304,8 +304,8 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
     source = ColumnDataSource(data=df_merged.round(2))
 
     stat_titles = {
-        "mae": "MAE (m)", "rmse": "RMSE (m)", "mean": "Bias (m)",
-        "std": "std (m)", "n_samples": "n_samples",
+        "mae": f"MAE ({unit})", "rmse": f"RMSE ({unit})", "mean": f"Bias ({unit})",
+        "std": f"std ({unit})", "n_samples": "n_samples",
     }
 
     columns = [TableColumn(field="transect", title="Transect")]
@@ -316,7 +316,6 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
     for stat in stat_cols:
         for i, label in enumerate(sdi_id):
             field = f"{stat}_{label}"
-            # title = f"{stat_titles[stat]} [{label}]" if n > 1 else stat_titles[stat]
             title = f"{stat_titles[stat]}" if n > 1 else stat_titles[stat]
 
             if stat == "n_samples":
@@ -328,7 +327,6 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
                         field_name=field, palette="RdYlGn9", low=4, high=12))
                 ))
 
-            # color = label_color[label]
             color = sdi_color[i]
             header_rules.append(
                 f".slick-header-column:nth-child({pos}) {{ background-color: {color} !important; color: white !important; }}"
@@ -337,8 +335,11 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str]):
 
     header_css = "\n".join(header_rules)
 
+    width = 450 if unit == 'pixel' else 400
+    # width = width * max(n, 1) if n > 1 else width, height = 400,
+
     data_table = DataTable(source=source, columns=columns,
-                           width=400 * max(n, 1) if n > 1 else 450, height=400,
+                           width=width * max(n, 1) if n > 1 else width, height=400,
                            index_position=None,
                            stylesheets=[f"""
                                         .slick-header-column {{
@@ -371,7 +372,7 @@ def taylor(ls_df_stats, ls_df_dbw, sdi_id, sdi_color):
     return p5
 
 def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], site, mission, sdi_id: list[str],
-               sdi_color: list[str]):
+               sdi_color: list[str], val_metrics_unit: str):
     '''
     plot statistics of difference between sat waterlines and groundtruth position along validation transects
     '''
@@ -386,7 +387,7 @@ def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], s
     p3 = histo_error(ls_df_dbw, sdi_id, sdi_color)
 
     # stats table
-    p4 = table(ls_df_stats, sdi_id, sdi_color)
+    p4 = table(ls_df_stats, sdi_id, sdi_color, val_metrics_unit)
 
     # taylor diagram
     if len(ls_df_dbw) > 1:
@@ -407,7 +408,7 @@ def statistics(ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame], s
 
 
 def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], ls_df_stats: list[pd.DataFrame],
-         site: str, sdi_id: list[str], sdi_color: list[str], odir: Path):
+         site: str, sdi_id: list[str], sdi_color: list[str], val_metrics_unit: str, odir: Path):
 
     # mission
     mission = sx.read_mission_name(ls_df_dbw[0])
@@ -419,7 +420,7 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], 
     layout_ts = timeseries(ls_df_dbw, mission, sdi_id, sdi_color)
 
     # stats
-    layout_stats = statistics(ls_df_dbw, ls_df_stats, site, mission, sdi_id, sdi_color)
+    layout_stats = statistics(ls_df_dbw, ls_df_stats, site, mission, sdi_id, sdi_color, val_metrics_unit)
 
     # gather timeseries and stats plots in a single page, using a radio button group
     labels = ['Transects', 'Timeseries', 'Statistics']
@@ -462,7 +463,7 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], 
     layout = column(radio, *layouts_val, sizing_mode='stretch_width')
 
     # save
-    f_out = odir.joinpath(f'val_{site}_{mission}_{'_'.join(sdi_id)}.html')
+    f_out = odir.joinpath(f'val_{site}_{mission}_{'_'.join(sdi_id)}_table_error_in_{val_metrics_unit}.html')
     output_file(f_out)
     print('\n --> %s \n' %f_out)
     save(layout, title='Validation Shorelinerx')

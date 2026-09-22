@@ -18,7 +18,9 @@ class SatWaterlines(BaseModel):
 class AppConfig(BaseModel):
     site: str
     sdi: SatWaterlines
+    pixel_res: int
     f_insitu_bp: Path
+    val_metrics_unit: str
     f_tr: Path
     table_tr_id: dict
     odir: Path

@@ -10,5 +10,7 @@ def main(conf):
         conf.f_tr,
         conf.table_tr_id,
         conf.site,
+        conf.val_metrics_unit,
+        conf.pixel_res,
         conf.odir
     )

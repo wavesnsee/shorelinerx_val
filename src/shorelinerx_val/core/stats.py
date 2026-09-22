@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def validation_metrics(ls_df_dbw: list[pd.DataFrame]):
+def validation_metrics(ls_df_dbw: list[pd.DataFrame], val_metrics_unit: str, pixel_res: int):
     '''
     computation of validation metrics by transect, and globally, for each satellited derived intersections dataset
     '''
@@ -35,6 +35,10 @@ def validation_metrics(ls_df_dbw: list[pd.DataFrame]):
                 d = df_dbw[(df_dbw.transect_id) == tr]['d_bw_insitu_m']
             else:
                 d = df_dbw['d_bw_insitu_m']
+
+            # convert beach width difference into pixels if specified
+            if val_metrics_unit == 'pixel':
+                d = d / pixel_res
 
             # filter respective beach widths
             if tr != 'ALL':
