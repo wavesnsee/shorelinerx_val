@@ -195,19 +195,20 @@ def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id:
                     else:
                         # get the bp date indices surrounding waterline date
                         i1, i2 = bracket_indices(df_bp_tr['datetime_utc'], wl['datetime_utc'])
-                        bp1 = df_bp_tr.iloc[i1]
-                        bp2 = df_bp_tr.iloc[i2]
-                        csd_from_bp1 = insitu.cross_shore_at_elevation(bp1['cross_sh_d'].squeeze(),
-                                                                       bp1['elevation'].squeeze(), z)
-                        csd_from_bp2 = insitu.cross_shore_at_elevation(bp2['cross_sh_d'].squeeze(),
-                                                                       bp2['elevation'].squeeze(), z)
+                        if (i1 is not None) and (i2 is not None):
+                            bp1 = df_bp_tr.iloc[i1]
+                            bp2 = df_bp_tr.iloc[i2]
+                            csd_from_bp1 = insitu.cross_shore_at_elevation(bp1['cross_sh_d'].squeeze(),
+                                                                           bp1['elevation'].squeeze(), z)
+                            csd_from_bp2 = insitu.cross_shore_at_elevation(bp2['cross_sh_d'].squeeze(),
+                                                                           bp2['elevation'].squeeze(), z)
 
-                        # linear interpolation between csd from bp1 and bp2
-                        if (csd_from_bp1 is not None) and (csd_from_bp2 is not None):
-                            csd_from_bp = csd_from_bp1 + (csd_from_bp2 - csd_from_bp1) * (- dt.iloc[i1]) / (
-                                        dt.iloc[i2] - dt.iloc[i1])
-                            dt_i = np.array(
-                                [dt.iloc[i1] / np.timedelta64(1, 'D'), dt.iloc[i2] / np.timedelta64(1, 'D')]).round(1)
+                            # linear interpolation between csd from bp1 and bp2
+                            if (csd_from_bp1 is not None) and (csd_from_bp2 is not None):
+                                csd_from_bp = csd_from_bp1 + (csd_from_bp2 - csd_from_bp1) * (- dt.iloc[i1]) / (
+                                            dt.iloc[i2] - dt.iloc[i1])
+                                dt_i = np.array(
+                                    [dt.iloc[i1] / np.timedelta64(1, 'D'), dt.iloc[i2] / np.timedelta64(1, 'D')]).round(1)
                         else:
                             csd_from_bp = None
 
