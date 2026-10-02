@@ -1,8 +1,17 @@
 site: 'truc_vert'
 sdi: # satellite derived intersections of waterlines with transects
-    id: ['sx_l2a']
-    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_l2a.parquet']
-    color: ['#378ADD']
+    id: [
+      'sx',
+      'sentiline'
+    ]
+    path: [
+      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_l2a.parquet',
+      '/home/florent/Projects/benchmark_satellite_coastlines/deliverable_comp_sx/Sentinel_2/TRUCVERT/intersections_sentiline.parquet'
+    ]
+    color: [
+      '#378ADD',
+      '#ff0000'
+    ]
 pixel_res: 10 # resolution of satellite images, in metres
 f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet' # groundtruth beach profile's file
 val_metrics_unit: 'm' # ('m' or 'pixel') validation metrics unit, ether in m or pixels
@@ -12,5 +21,5 @@ table_tr_id: # correspondance of transect ids
   1: -300
   2: -200
   3: -100
-tide_selection: null # if [null] no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
+tide_selection: [0.2, 10] # if None no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
 odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results

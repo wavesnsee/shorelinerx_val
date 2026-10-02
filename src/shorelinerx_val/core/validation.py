@@ -138,14 +138,34 @@ def sync_t_ls_df_dbw(ls_df_dbw, tol_hours=1, transect_col='transect_id',
 
     return out
 
+def apply_tide_selection(ls_df_bw: list[pd.DataFrame], tide_selection: list):
+    '''
+    apply a tide selection on waterlines
+    '''
+    print('')
 
-def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id: dict):
+    ls_df_bw_tide_sel = []
+
+    for df_bw in ls_df_bw:
+        z = df_bw['tide_z'] / 100  # conversion cm to m
+        mask = np.logical_and((z> tide_selection[0]), (z < tide_selection[1]))
+        ls_df_bw_tide_sel.append(df_bw[mask])
+
+    return ls_df_bw_tide_sel
+
+
+def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id: dict, tide_selection: list):
     '''
     compute difference of waterline position between each satellite derived waterline dataset and insitu
     :return:
     '''
 
     ls_df_dbw = []
+
+    # apply tide selection if specified
+    if tide_selection[0] is not None:
+        ls_df_bw = apply_tide_selection(ls_df_bw, tide_selection)
+
 
     for df_bw in ls_df_bw:
 
@@ -247,7 +267,7 @@ def compute_d_bw(ls_df_bw: list[pd.DataFrame], df_bp: pd.DataFrame, table_tr_id:
 
 
 def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_bp: Path, f_tr: Path, table_tr_id: dict,
-        site: str, val_metrics_unit: str, pixel_res: int, odir: Path):
+        site: str, val_metrics_unit: str, pixel_res: int, tide_selection: list, odir: Path):
     '''
 
     :param f_sx_bw: intersections file (geoparquet) from shorelinerx
@@ -257,6 +277,7 @@ def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_
     :param table_tr_id: dictionnary of correspondance for transect ids betwen sx and groundtruth
     :param: val_metrics_unit: validation metrics unit, either 'm' or 'pixel'
     :param pixel_res: resolution of satellite image in meters
+    :param tide_selection: if None no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
     :param odir: path for output directory
     :return: statistics waterline position at transects (shorelinerx vs groundtruth)
     '''
@@ -271,7 +292,7 @@ def run(sdi_path: list[Path], sdi_id: list[str], sdi_color: list[str], f_insitu_
     ls_df_bw = sx.read_bw(sdi_path, table_tr_id)
 
     # compute difference of waterline position between sat and insitu
-    ls_df_dbw = compute_d_bw(ls_df_bw, df_bp, table_tr_id)
+    ls_df_dbw = compute_d_bw(ls_df_bw, df_bp, table_tr_id, tide_selection)
 
     # compute validation metrics
     ls_df_stats = stats.validation_metrics(ls_df_dbw, val_metrics_unit, pixel_res)

@@ -12,5 +12,6 @@ def main(conf):
         conf.site,
         conf.val_metrics_unit,
         conf.pixel_res,
+        conf.tide_selection,
         conf.odir
     )

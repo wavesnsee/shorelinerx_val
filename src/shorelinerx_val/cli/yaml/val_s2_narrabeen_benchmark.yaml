@@ -21,4 +21,5 @@ table_tr_id: # correspondance of transect ids
   2: 'PF4'
   3: 'PF6'
   4: 'PF8'
+tide_selection: null # if [null] no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
 odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results

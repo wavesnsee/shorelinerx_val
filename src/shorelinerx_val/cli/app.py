@@ -23,6 +23,7 @@ class AppConfig(BaseModel):
     val_metrics_unit: str
     f_tr: Path
     table_tr_id: dict
+    tide_selection: list
     odir: Path
 
 
