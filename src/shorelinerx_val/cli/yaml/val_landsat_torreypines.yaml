@@ -1,0 +1,16 @@
+site: 'torreypines'
+sdi:
+  id: ['shorelinerx']
+  path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/landsat/torreypines/intersections/intersections.parquet']
+  color: ['#378ADD']
+f_sx_bw: '/home/florent/Projects/Shoreliner_CNES/validation/runs/landsat/torreypines/intersections/intersections.parquet' # shorelinerx intersections results' file
+pixel_res: 30 # resolution of satellite images, in metres
+f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_torreypines.parquet' # groundtruth beach profile's file
+val_metrics_unit: 'm' # ('m' or 'pixel') validation metrics unit, ether in m or pixels
+f_tr: '/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/compatible_sx/TORREYPINES_transects.parquet'
+table_tr_id: # correspondance of transect ids
+  0: 525
+  1: 535
+  2: 585
+  3: 595
+odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results
