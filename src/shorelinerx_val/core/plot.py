@@ -50,7 +50,7 @@ def transects(df_tr: pd.DataFrame, table_tr_id:dict, odir):
     for i in range(len(df_tr)):
         label = Label(
             x=df_tr.geometry[i].xy[0][-1], y=df_tr.geometry[i].xy[1][-1],
-            text=table_tr_id[i],
+            text=str(table_tr_id[i]),
             x_offset=8, y_offset=0,
             text_font_size="12pt", text_baseline="middle",
             background_fill_color="white", background_fill_alpha=1,
