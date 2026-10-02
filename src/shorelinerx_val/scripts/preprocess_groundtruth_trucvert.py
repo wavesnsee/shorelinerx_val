@@ -8,7 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from shapely.geometry import Point, LineString
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def read_grid(f_grid):
@@ -70,8 +70,7 @@ def read_dems(filenames, transects, i_transects, gdf):
         print(f)
         data = Dataset(f)
         date_str = f.name[-13:].split('.nc')[0]
-        date = datetime.strptime(date_str, '%Y-%m-%d') + timedelta(days=0.5)
-        date_str += '12:00'
+        date = datetime.strptime(date_str + ' 11:00', '%Y-%m-%d %H:%M').replace(tzinfo=timezone.utc)
 
         for j in range(len(transects)):
             dates.append(date)
@@ -144,7 +143,7 @@ def plot_profiles(gdf_transects, df_profiles, transects, odir):
             ax[1].set_ylim([-2, 12])
             ax[1].legend(loc='upper right')
             ax[1].grid(True)
-        plt.show()
+        # plt.show()
         f_jpg = odir / f'bp_trucvert/bp_{pd.Timestamp(date).strftime('%Y-%m-%d')}.jpg'
 
         plt.savefig(f_jpg, bbox_inches='tight')

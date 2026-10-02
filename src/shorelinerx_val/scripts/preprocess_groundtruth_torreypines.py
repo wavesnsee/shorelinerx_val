@@ -8,7 +8,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from shapely.geometry import Point, LineString
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def read_grid(f_grid):
@@ -72,8 +72,7 @@ def read_dems(filenames, transects):
         print(f)
         data = Dataset(f)
         date_str = f.name.split('_')[0].split('map')[1]
-        date = datetime.strptime(date_str, '%Y%m%d') + timedelta(days=0.5)
-        date_str += '12:00'
+        date = (datetime.strptime(date_str + ' 04:00', '%Y%m%d %H:%M')).replace(tzinfo=timezone.utc)
 
         # read grid of profile names alongshore
         alg = np.array(data.variables['alg'][:])
