@@ -1,15 +1,16 @@
 site: 'narrabeen'
 sdi: # satellite derived intersections of waterlines with transects
-    id: ['shorelinerx',
-         'sentiline'
+    id: [
+      'sx_l1c',
+      'sx_l2a',
     ]
     path: [
-      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/narrabeen/reference_shoreline/intersections.parquet',
-      '/home/florent/Projects/benchmark_satellite_coastlines/deliverable_comp_sx/Sentinel_2/NARRABEEN/intersections_sentiline.parquet'
+      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/narrabeen/intersections/intersections_l1c.parquet',
+      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/narrabeen/intersections/intersections_l2a.parquet',
     ]
-    color: [# plots color
+    color: [
       '#378ADD',
-      '#ff0000'
+      '#ff8618',
     ]
 pixel_res: 10 # resolution of satellite images, in metres
 f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet' # groundtruth beach profile's file
