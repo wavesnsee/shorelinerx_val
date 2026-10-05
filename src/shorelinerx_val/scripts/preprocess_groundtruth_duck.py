@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from netCDF4 import Dataset
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def read_survey_data(filenames):
@@ -32,7 +32,7 @@ def read_survey_data(filenames):
             survey_number = np.array(data.variables['surveyNumber'][:])[0]
             # survey data
             survey_data[str(survey_number)] = dict([])
-            survey_data[str(survey_number)]['date'] = t_dtm
+            survey_data[str(survey_number)]['date'] = t_dtm.replace(tzinfo=timezone.utc)
             survey_data[str(survey_number)]['latitude'] = np.array(data.variables['lat'][:])
             survey_data[str(survey_number)]['longitude'] = np.array(data.variables['lon'][:])
             survey_data[str(survey_number)]['x'] = np.array(data.variables['xFRF'][:])
