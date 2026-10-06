@@ -262,12 +262,12 @@ def histo_error(ls_df_dbw: list[pd.DataFrame], sdi_id: list[str], sdi_color: lis
     )
 
     # bin edges
-    bin_edges = np.arange(-30, 30.1, 1)
+    bin_edges = np.arange(-50, 50.1, 2)
 
     for i, df_dbw in enumerate(ls_df_dbw):
         hist, edges = np.histogram(df_dbw['d_bw_insitu_m'], bins=bin_edges)
 
-        p3.x_range = Range1d(-30, 30)
+        p3.x_range = Range1d(-50, 50)
 
         p3.quad(
             top=hist, bottom=0,
