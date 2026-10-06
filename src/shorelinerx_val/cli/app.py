@@ -52,9 +52,6 @@ def main(
     if not conf.f_insitu_bp.exists():
         raise typer.Exit("groundtruth beach profile's file")
 
-    if not conf.odir.exists():
-        conf.odir.mkdir(parents=True, exist_ok=True)
-
     try:
         # Run validation
         val.main(conf)

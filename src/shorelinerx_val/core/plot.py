@@ -462,8 +462,13 @@ def make(df_tr: pd.DataFrame, table_tr_id: dict, ls_df_dbw: list[pd.DataFrame], 
 
     layout = column(radio, *layouts_val, sizing_mode='stretch_width')
 
+    # output directory
+    odir = odir / f'table_error_in_{val_metrics_unit}'
+    if not odir.exists():
+        odir.mkdir(parents=True, exist_ok=True)
+
     # save
-    f_out = odir.joinpath(f'val_{site}_{mission}_{'_'.join(sdi_id)}_table_error_in_{val_metrics_unit}.html')
+    f_out = odir.joinpath(f'{site}_{mission}_{'_'.join(sdi_id)}.html')
     output_file(f_out)
     print('\n --> %s \n' %f_out)
     save(layout, title='Validation Shorelinerx')
