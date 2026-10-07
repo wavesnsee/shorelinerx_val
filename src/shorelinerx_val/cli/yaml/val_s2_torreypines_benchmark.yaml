@@ -1,6 +1,6 @@
 site: 'torreypines'
 sdi: # satellite derived intersections of waterlines with transects
-    id: ['sx',
+    id: ['shorelinerx',
          'sentiline'
     ]
     path: [

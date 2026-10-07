@@ -1,7 +1,7 @@
 site: 'truc_vert'
 sdi: # satellite derived intersections of waterlines with transects
     id: [
-      'sx',
+      'shorelinerx',
       'sentiline'
     ]
     path: [
