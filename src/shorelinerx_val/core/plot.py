@@ -301,7 +301,14 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str], unit: str):
         )
         df_merged = df_renamed if df_merged is None else df_merged.merge(df_renamed, on="transect", how="outer")
 
-    source = ColumnDataSource(data=df_merged.round(2))
+    df_plot = df_merged.round(2)
+
+    # helper columns: abs(mean) per source, used only for colouring
+    for label in sdi_id:
+        df_plot[f"absmean_{label}"] = df_plot[f"mean_{label}"].abs()
+
+    source = ColumnDataSource(data=df_plot)
+    # source = ColumnDataSource(data=df_merged.round(2))
 
     stat_titles = {
         "mae": f"MAE ({unit})", "rmse": f"RMSE ({unit})", "mean": f"Bias ({unit})",
@@ -310,6 +317,13 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str], unit: str):
 
     columns = [TableColumn(field="transect", title="Transect")]
     header_rules = []  # one CSS rule per colored header
+
+    # minmax for background colors
+    minmax = {}
+    minmax['mae'] = [5, 20]
+    minmax['rmse'] = [5, 20]
+    minmax['std'] = [5, 15]
+    minmax['mean'] = [0, 20]
 
     # position 1 = "Transect" (no color); data columns start at position 2
     pos = 2
@@ -321,10 +335,19 @@ def table(ls_df_stats, sdi_id: list[str], sdi_color: list[str], unit: str):
             if stat == "n_samples":
                 columns.append(TableColumn(field=field, title=title))
             else:
+                # colour field: abs(mean) for the bias column, the column itself otherwise
+                color_field = f"absmean_{label}" if stat == "mean" else field
                 columns.append(TableColumn(
                     field=field, title=title,
-                    formatter=NumberFormatter(format="0.00", background_color=linear_cmap(
-                        field_name=field, palette="RdYlGn9", low=4, high=12))
+                    formatter=NumberFormatter(
+                        format="0.00",
+                        background_color=linear_cmap(
+                            field_name=color_field,
+                            palette="RdYlGn9",
+                            low=minmax[stat][0],
+                            high=minmax[stat][1],
+                        ),
+                    ),
                 ))
 
             color = sdi_color[i]
