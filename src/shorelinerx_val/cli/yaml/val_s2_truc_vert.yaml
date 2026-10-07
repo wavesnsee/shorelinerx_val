@@ -1,7 +1,8 @@
-site: 'truc_vert'
+site: 'trucvert'
 sdi: # satellite derived intersections of waterlines with transects
-    id: ['sx_l2a']
-    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_l2a.parquet']
+    id: ['shorelinerx']
+#    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections.parquet']
+    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_edited.parquet']
     color: ['#378ADD']
 pixel_res: 10 # resolution of satellite images, in metres
 f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_trucvert.parquet' # groundtruth beach profile's file

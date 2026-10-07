@@ -1,14 +1,9 @@
 site: 'duck'
 sdi: # satellite derived intersections of waterlines with transects
-    id: [
-      'sx',
-    ]
-    path: [
-      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/duck/intersections/intersections.parquet',
-    ]
-    color: [
-      '#378ADD',
-    ]
+    id: ['shorelinerx',]
+#    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/duck/intersections/intersections.parquet']
+    path: ['/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/duck/intersections/intersections_edited.parquet']
+    color: ['#378ADD']
 pixel_res: 10 # resolution of satellite images, in metres
 f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet' # groundtruth beach profile's file
 val_metrics_unit: 'm' # ('m' or 'pixel') validation metrics unit, ether in m or pixels

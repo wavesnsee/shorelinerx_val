@@ -5,7 +5,7 @@ sdi: # satellite derived intersections of waterlines with transects
       'sentiline'
     ]
     path: [
-      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_l2a.parquet',
+      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/truc_vert/intersections/intersections_edited.parquet',
       '/home/florent/Projects/benchmark_satellite_coastlines/deliverable_comp_sx/Sentinel_2/TRUCVERT/intersections_sentiline.parquet'
     ]
     color: [
@@ -22,4 +22,4 @@ table_tr_id: # correspondance of transect ids
   2: -200
   3: -100
 tide_selection: [0.2, 10] # if None no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
-odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/' # output directory for validation's results
+odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/benchmark/' # output directory for validation's results

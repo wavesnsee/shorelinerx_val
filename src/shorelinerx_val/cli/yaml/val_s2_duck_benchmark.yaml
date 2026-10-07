@@ -1,25 +1,24 @@
-site: 'narrabeen'
+site: 'duck'
 sdi: # satellite derived intersections of waterlines with transects
     id: ['shorelinerx',
          'sentiline'
     ]
     path: [
-      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/narrabeen/intersections/intersections_edited.parquet',
-      '/home/florent/Projects/benchmark_satellite_coastlines/deliverable_comp_sx/Sentinel_2/NARRABEEN/intersections_sentiline.parquet'
+      '/home/florent/Projects/Shoreliner_CNES/validation/runs/sentinel_2/duck/intersections/intersections_edited.parquet',
+      '/home/florent/Projects/benchmark_satellite_coastlines/deliverable_comp_sx/Sentinel_2/DUCK/intersections_sentiline.parquet'
     ]
     color: [# plots color
       '#378ADD',
       '#ff0000'
     ]
 pixel_res: 10 # resolution of satellite images, in metres
-f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_narrabeen.parquet' # groundtruth beach profile's file
+f_insitu_bp: '/home/florent/Projects/Shoreliner_CNES/validation/groundtruth/beach_profiles_duck.parquet' # groundtruth beach profile's file
 val_metrics_unit: 'm' # ('m' or 'pixel') validation metrics unit, ether in m or pixels
-f_tr: '/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/compatible_sx/NARRABEEN_transects.parquet'
+f_tr: '/home/florent/Projects/Shoreliner_CNES/validation/transects/selection/compatible_sx/DUCK_transects.parquet'
 table_tr_id: # correspondance of transect ids
-  0: 'PF1'
-  1: 'PF2'
-  2: 'PF4'
-  3: 'PF6'
-  4: 'PF8'
+  0: -91
+  1: 1
+  2: 1006
+  3: 1097
 tide_selection: [null] # if [null] no tide selection is made. Else, only waterlines whose tide is comprised between [hmin, hmax] are kept
 odir: '/home/florent/Projects/Shoreliner_CNES/validation/results/benchmark/' # output directory for validation's results
