@@ -1,5 +1,5 @@
 [project]
-name = "shorelinerx-val"
+name = "sx_val"
 version = "0.1.0"
 description = "Validation to assess shorelinerx waterlines accuracy"
 readme = "README.md"
