@@ -2,7 +2,7 @@
 
 
 ## Preprocessing
-A preprocessing is done to extract beach profiles along given transects for the differents sites.
+A preprocessing cis done to exxstract beach profiles along given transects for the differents sites.
 
 All elevations in the extracted profiles are relative to MSL (Mean Sea Level).
 
@@ -23,5 +23,18 @@ At Duck and Torreypines; Here is the relative position of MSL relatively to NAVD
 |TORREYPINES| 0.774                |
 
 
+## Installation
+Install as a uv tool:
+
+`uv tool install "shorelinerx_val @ git+ssh://git@github.com/wavesnsee/shorelinerx_val.git@main"`
+
+
+## Usage
+`shorelinerx_val myfile.yaml`
+
+## yaml
+To see an example of yaml parameters' file, see file: 
+
+**src/shorelinerx_val/cli/yaml/val_s2_duck.yaml**
 
 
