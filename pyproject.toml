@@ -1,5 +1,5 @@
 [project]
-name = "sx_val"
+name = "shorelinerx_val"
 version = "0.1.0"
 description = "Validation to assess shorelinerx waterlines accuracy"
 readme = "README.md"
@@ -27,4 +27,4 @@ requires = ["uv_build>=0.8.22,<0.9.0"]
 build-backend = "uv_build"
 
 [project.scripts]
-sx_val = "shorelinerx_val.cli.app:app"
+shorelinerx_val = "shorelinerx_val.cli.app:app"
